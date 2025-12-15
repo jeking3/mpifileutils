@@ -154,7 +154,7 @@ IF(LibCap_FOUND)
 ENDIF(LibCap_FOUND)
 
 ## OPENSSL for ddup
-FIND_PACKAGE(OpenSSL)
+# FIND_PACKAGE(OpenSSL)
 
 # Setup Installation
 
