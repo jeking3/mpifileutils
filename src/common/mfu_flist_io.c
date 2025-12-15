@@ -2,6 +2,7 @@
 
 #define _GNU_SOURCE
 #include <dirent.h>
+#include <inttypes.h>
 #include <fcntl.h>
 #include <sys/syscall.h>
 
@@ -1617,33 +1618,10 @@ static size_t print_file_text(mfu_flist flist, uint64_t idx, char* buffer, size_
         const char* username  = mfu_flist_file_get_username(flist, idx);
         const char* groupname = mfu_flist_file_get_groupname(flist, idx);
 
-        char access_s[30];
-        char modify_s[30];
-        char create_s[30];
-        time_t access_t = (time_t) acc;
-        time_t modify_t = (time_t) mod;
-        time_t create_t = (time_t) cre;
-        size_t access_rc = strftime(access_s, sizeof(access_s) - 1, "%FT%T", localtime(&access_t));
-        size_t modify_rc = strftime(modify_s, sizeof(modify_s) - 1, "%b %e %Y %H:%M", localtime(&modify_t));
-        size_t create_rc = strftime(create_s, sizeof(create_s) - 1, "%FT%T", localtime(&create_t));
-        if (access_rc == 0 || modify_rc == 0 || create_rc == 0) {
-            /* error */
-            access_s[0] = '\0';
-            modify_s[0] = '\0';
-            create_s[0] = '\0';
-        }
-
         char mode_format[11];
         mfu_format_mode(mode, mode_format);
 
-        double size_tmp;
-        const char* size_units;
-        mfu_format_bytes(size, &size_tmp, &size_units);
-
-        numbytes = snprintf(buffer, bufsize, "%s %s %s %7.3f %3s %s %s\n",
-            mode_format, username, groupname,
-            size_tmp, size_units, modify_s, file
-        );
+        numbytes = snprintf(buffer, bufsize, "%s %s %s %" PRIu64 " %" PRIu64 " %" PRIu64 " %s\n", mode_format, username, groupname, size, acc, mod, file);
     }
     else {
         /* get type */
