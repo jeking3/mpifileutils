@@ -44,6 +44,11 @@ OPTIONS
    Must be used with the --output option. Write list of items drm attempts
    to delete to FILE in ascii text format.
 
+.. option:: -E, --urlencode
+
+   Must be used with the --text option. Percent-encode ASCII control
+   characters in file names so that each entry stays on one line.
+
 .. option:: -l, --lite
 
    Walk file system without stat.

@@ -1592,9 +1592,46 @@ void mfu_flist_write_cache(
     return;
 }
 
+/* Static hex lookup table for percent encoding */
+static const char hex_chars[] = "0123456789ABCDEF";
+
+/*
+ * Encode control characters that could interfere with a readline().
+ * All characters 0x01 through 0x1F, percent (0x25), and 0x7F are
+ * percent-encoded as %XX where XX is the hex value (uppercase).
+ *
+ * Caller must provide a buffer of size PATH_MAX * 3 + 1.
+ * Returns the output buffer on success, NULL if input is NULL.
+ */
+static char* control_encode(const char* str, char* buf)
+{
+    if (str == NULL || buf == NULL) {
+        return NULL;
+    }
+
+    char* out = buf;
+    const unsigned char* in = (const unsigned char*)str;
+
+    while (*in) {
+        /* Encode all control characters (0x01-0x1F and 0x7F) plus percent */
+        if ((*in >= 0x01 && *in <= 0x1F) || *in == 0x7F || *in == '%') {
+            /* Encode as %XX where XX is hex value using lookup table */
+            *out++ = '%';
+            *out++ = hex_chars[*in >> 4];
+            *out++ = hex_chars[*in & 0x0F];
+        } else {
+            *out++ = *in;
+        }
+        in++;
+    }
+    *out = '\0';
+
+    return buf;
+}
+
 /* TODO: move this somewhere or modify existing print_file */
 /* print information about a file given the index and rank (used in print_files) */
-static size_t print_file_text(mfu_flist flist, uint64_t idx, char* buffer, size_t bufsize)
+static size_t print_file_text(mfu_flist flist, uint64_t idx, char* buffer, size_t bufsize, int urlencode)
 {
     size_t numbytes = 0;
 
@@ -1606,6 +1643,12 @@ static size_t print_file_text(mfu_flist flist, uint64_t idx, char* buffer, size_
 
     /* get filename */
     const char* file = mfu_flist_file_get_name(flist, idx);
+
+    /* encode full path if requested to avoid readline() snafus */
+    char encoded_buf[PATH_MAX * 3 + 1];
+    if (urlencode) {
+        file = control_encode(file, encoded_buf);
+    }
 
     if (mfu_flist_have_detail(flist)) {
         /* get mode */
@@ -1647,7 +1690,8 @@ static size_t print_file_text(mfu_flist flist, uint64_t idx, char* buffer, size_
 
 void mfu_flist_write_text(
     const char* name,
-    mfu_flist bflist)
+    mfu_flist bflist,
+    int urlencode)
 {
     /* convert handle to flist_t */
     flist_t* flist = (flist_t*) bflist;
@@ -1673,7 +1717,7 @@ void mfu_flist_write_text(
     uint64_t idx;
     uint64_t size = mfu_flist_size(flist);
     for (idx = 0; idx < size; idx++) {
-        size_t count = print_file_text(flist, idx, NULL, 0);
+        size_t count = print_file_text(flist, idx, NULL, 0, urlencode);
         bufsize += count + 1;
     }
 
@@ -1684,7 +1728,7 @@ void mfu_flist_write_text(
     char* ptr = buf;
     size_t total = 0;
     for (idx = 0; idx < size; idx++) {
-        size_t count = print_file_text(flist, idx, ptr, bufsize - total);
+        size_t count = print_file_text(flist, idx, ptr, bufsize - total, urlencode);
         total += count;
         ptr += count;
     }

@@ -38,6 +38,7 @@ static void print_usage(void)
     printf("Options:\n");
     printf("  -o, --output <EXPR:FILE>  - write list of entries matching EXPR to FILE\n");
     printf("  -t, --text                - change output option to write in text format\n");
+    printf("  -E, --urlencode           - use with -t; percent-encode ASCII control characters in filenames\n");
     printf("  -b, --base                - enable base checks and normal output with --output\n");
     printf("      --bufsize <SIZE>      - IO buffer size in bytes (default " MFU_BUFFER_SIZE_STR ")\n");
     printf("      --chunksize <SIZE>    - minimum work size per task in bytes (default " MFU_CHUNK_SIZE_STR ")\n");
@@ -1841,7 +1842,8 @@ static int dcmp_output_write(
     mfu_flist src_flist,
     strmap* src_map,
     mfu_flist dst_flist,
-    strmap* dst_map)
+    strmap* dst_map,
+    int urlencode)
 {
     int ret = 0;
     mfu_flist new_flist = mfu_flist_subset(src_flist);
@@ -1865,7 +1867,7 @@ static int dcmp_output_write(
         if (options.format) {
             mfu_flist_write_cache(output->file_name, new_flist);
         } else {
-            mfu_flist_write_text(output->file_name, new_flist);
+            mfu_flist_write_text(output->file_name, new_flist, urlencode);
         }
     }
 
@@ -1898,7 +1900,8 @@ static int dcmp_outputs_write(
     mfu_flist src_list,
     strmap* src_map,
     mfu_flist dst_list,
-    strmap* dst_map)
+    strmap* dst_map,
+    int urlencode)
 {
     struct dcmp_output* output;
     int ret = 0;
@@ -1906,7 +1909,7 @@ static int dcmp_outputs_write(
     list_for_each_entry(output,
                         &options.outputs,
                         linkage) {
-        ret = dcmp_output_write(output, src_list, src_map, dst_list, dst_map);
+        ret = dcmp_output_write(output, src_list, src_map, dst_list, dst_map, urlencode);
         if (ret) {
             fprintf(stderr,
                 "failed to output to file \"%s\"\n",
@@ -2139,6 +2142,7 @@ int main(int argc, char **argv)
     static struct option long_options[] = {
         {"output",        1, 0, 'o'},
         {"text",          0, 0, 't'},
+        {"urlencode",     0, 0, 'E'},
         {"base",          0, 0, 'b'},
         {"bufsize",       1, 0, 'B'},
         {"chunksize",     1, 0, 'k'},
@@ -2159,10 +2163,11 @@ int main(int argc, char **argv)
     /* read in command line options */
     int usage = 0;
     int help  = 0;
+    int urlencode = 0;
     unsigned long long bytes = 0;
     while (1) {
         int c = getopt_long(
-            argc, argv, "o:tbsvqldh",
+            argc, argv, "o:tEbsvqldh",
             long_options, &option_index
         );
 
@@ -2179,6 +2184,9 @@ int main(int argc, char **argv)
             break;
         case 't':
             options.format = 0;
+            break;
+        case 'E':
+            urlencode = 1;
             break;
         case 'b':
             options.base++;
@@ -2386,7 +2394,7 @@ int main(int argc, char **argv)
     }
 
     /* write data to cache files and print summary */
-    dcmp_outputs_write(flist3, map1, flist4, map2);
+    dcmp_outputs_write(flist3, map1, flist4, map2, urlencode);
 
     /* free maps of file names to comparison state info */
     strmap_delete(&map1);

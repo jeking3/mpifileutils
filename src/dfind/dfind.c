@@ -160,6 +160,7 @@ static void print_usage(void)
     printf("  -i, --input <file>      - read list from file\n");
     printf("  -o, --output <file>     - write processed list to file\n");
     printf("  -t, --text              - use with -o; write processed list to file in ascii format\n");
+    printf("  -E, --urlencode         - use with -t; percent-encode ASCII control characters in filenames\n");
     printf("  -v, --verbose           - verbose output\n");
     printf("  -q, --quiet             - quiet output\n");
     printf("  -h, --help              - print usage\n");
@@ -307,7 +308,9 @@ int main (int argc, char** argv)
     char* inputname  = NULL;
     char* outputname = NULL;
     int walk = 0;
+    int print = 0;
     int text = 0;
+    int urlencode = 0;
     int rc = 0;
 
 #ifdef DAOS_SUPPORT
@@ -319,6 +322,7 @@ int main (int argc, char** argv)
         {"input",       1, 0, 'i'},
         {"output",      1, 0, 'o'},
         {"text",        0, 0, 't'},
+        {"urlencode",   0, 0, 'E'},
         {"verbose",     0, 0, 'v'},
         {"quiet",       0, 0, 'q'},
         {"help",        0, 0, 'h'},
@@ -356,7 +360,7 @@ int main (int argc, char** argv)
     int usage = 0;
     while (1) {
         int c = getopt_long(
-                    argc, argv, "i:o:tvqh",
+                    argc, argv, "i:o:tEvqh",
                     long_options, NULL
                 );
 
@@ -543,6 +547,9 @@ int main (int argc, char** argv)
         case 't':
             text = 1;
             break;
+        case 'E':
+            urlencode = 1;
+            break;
         case 'v':
             mfu_debug_level = MFU_LOG_VERBOSE;
             break;
@@ -684,7 +691,7 @@ daos_setup_done:
         if (!text) {
             mfu_flist_write_cache(outputname, flist2);
         } else {
-            mfu_flist_write_text(outputname, flist2);
+            mfu_flist_write_text(outputname, flist2, urlencode);
         }
     }
 

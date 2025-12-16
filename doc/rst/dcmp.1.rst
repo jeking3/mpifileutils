@@ -32,6 +32,11 @@ OPTIONS
 
    Change --output to write files in text format rather than binary.
 
+.. option:: -E, --urlencode
+
+   Must be used with the --text option. Percent-encode ASCII control
+   characters in file names so that each entry stays on one line.
+
 .. option:: -b, --base
 
    Enable base checks and normal stdout results when --output is used.

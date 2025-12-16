@@ -41,9 +41,10 @@ static void print_usage(void)
 #endif
     printf("\n");
     printf("Options:\n");
-    printf("  -i, --input   <file>   - read list from file\n");
+    printf("  -i, --input  <file>    - read list from file\n");
     printf("  -o, --output <file>    - write list to file in binary format\n");
     printf("  -t, --text             - use with -o; write processed list to file in ascii format\n");
+    printf("  -E, --urlencode        - use with -t; percent-encode ASCII control characters in filenames\n");
     printf("  -l, --lite             - walk file system without stat\n");
     printf("      --stat             - walk file system with stat\n");
     printf("      --exclude <regex>  - exclude from command entries that match the regex\n");
@@ -89,6 +90,7 @@ int main(int argc, char** argv)
     int dryrun       = 0;
     int traceless    = 0;
     int text         = 0;
+    int urlencode    = 0;
 
 #ifdef DAOS_SUPPORT
     /* DAOS vars */
@@ -111,6 +113,7 @@ int main(int argc, char** argv)
         {"input",       1, 0, 'i'},
         {"output",      1, 0, 'o'},
         {"text",        0, 0, 't'},
+        {"urlencode",   0, 0, 'E'},
         {"lite",        0, 0, 'l'},
         {"stat",        0, 0, 's'},
         {"exclude",     1, 0, 'e'},
@@ -129,7 +132,7 @@ int main(int argc, char** argv)
     int usage = 0;
     while (1) {
         int c = getopt_long(
-                    argc, argv, "i:o:tlTvqh",
+                    argc, argv, "i:o:tElTvqh",
                     long_options, &option_index
                 );
 
@@ -146,6 +149,9 @@ int main(int argc, char** argv)
                 break;
             case 't':
                 text = 1;
+                break;
+            case 'E':
+                urlencode = 1;
                 break;
             case 'l':
                 /* don't stat each file during the walk */
@@ -373,7 +379,7 @@ daos_setup_done:
         if (!text) {
             mfu_flist_write_cache(outputname, srclist);
         } else {
-            mfu_flist_write_text(outputname, srclist);
+            mfu_flist_write_text(outputname, srclist, urlencode);
         }
     }
 

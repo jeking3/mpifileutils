@@ -285,7 +285,8 @@ void mfu_flist_write_cache(
 /* write file list to text file */
 void mfu_flist_write_text(
     const char* name,
-    mfu_flist flist
+    mfu_flist flist,
+    int urlencode
 );
 
 /* given a list of files print from start and end of the list */
