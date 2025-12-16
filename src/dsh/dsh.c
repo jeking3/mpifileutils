@@ -1606,6 +1606,8 @@ static void print_usage(void)
     printf("  -f, --file <file>   - read list from file, and write processed list back to file\n");
     printf("  -i, --input <file>  - read list from file\n");
     printf("  -o, --output <file> - write processed list to file\n");
+    printf("  -t, --text          - use with -o; write processed list to file in ascii format\n");
+    printf("  -E, --urlencode     - use with -t; percent-encode ASCII control characters in filenames\n");
     printf("  -l, --lite          - walk file system without stat\n");
     printf("  -v, --verbose       - verbose output\n");
     printf("  -h, --help          - print usage\n");
@@ -1648,25 +1650,27 @@ int main(int argc, char** argv)
     char* outputname = NULL;
     int walk = 0;
     int text = 0;
+    int urlencode = 0;
     /* set print default to 25 for now */
     int print_default = 100;
 
     int option_index = 0;
     static struct option long_options[] = {
-        {"file",     1, 0, 'f'},
-        {"input",    1, 0, 'i'},
-        {"output",   1, 0, 'o'},
-        {"lite",     0, 0, 'l'},
-        {"help",     0, 0, 'h'},
-        {"verbose",  0, 0, 'v'},
-        {"text",     0, 0, 't'},
+        {"file",      1, 0, 'f'},
+        {"input",     1, 0, 'i'},
+        {"output",    1, 0, 'o'},
+        {"lite",      0, 0, 'l'},
+        {"help",      0, 0, 'h'},
+        {"verbose",   0, 0, 'v'},
+        {"text",      0, 0, 't'},
+        {"urlencode", 0, 0, 'E'},
         {0, 0, 0, 0}
     };
 
     int usage = 0;
     while (1) {
         int c = getopt_long(
-                    argc, argv, "f:i:o:lhvt",
+                    argc, argv, "f:i:o:lhvtE",
                     long_options, &option_index
                 );
 
@@ -1697,6 +1701,9 @@ int main(int argc, char** argv)
                 break;
             case 't':
                 text = 1;
+                break;
+            case 'E':
+                urlencode = 1;
                 break;
             case '?':
                 usage = 1;
@@ -1965,7 +1972,7 @@ int main(int argc, char** argv)
         if (!text) {
             mfu_flist_write_cache(outputname, flist);
         } else {
-            mfu_flist_write_text(outputname, flist);
+            mfu_flist_write_text(outputname, flist, urlencode);
         }
     }
 

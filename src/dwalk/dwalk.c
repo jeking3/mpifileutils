@@ -314,6 +314,7 @@ static void print_usage(void)
     printf("  -i, --input <file>      - read list from file\n");
     printf("  -o, --output <file>     - write processed list to file in binary format\n");
     printf("  -t, --text              - use with -o; write processed list to file in ascii format\n");
+    printf("  -E, --urlencode         - use with -t; percent-encode ASCII control characters in filenames\n");
     printf("  -l, --lite              - walk file system without stat\n");
     printf("  -s, --sort <fields>     - sort output by comma-delimited fields\n");
     printf("  -d, --distribution <field>:<separators> \n                          - print distribution by field\n");
@@ -375,6 +376,7 @@ int main(int argc, char** argv)
     int walk                 = 0;
     int print                = 0;
     int text                 = 0;
+    int urlencode            = 0;
 
     struct distribute_option option;
 
@@ -386,6 +388,7 @@ int main(int argc, char** argv)
         {"input",          1, 0, 'i'},
         {"output",         1, 0, 'o'},
         {"text",           0, 0, 't'},
+        {"urlencode",      0, 0, 'E'},
         {"lite",           0, 0, 'l'},
         {"sort",           1, 0, 's'},
         {"distribution",   1, 0, 'd'},
@@ -403,7 +406,7 @@ int main(int argc, char** argv)
     int usage = 0;
     while (1) {
         int c = getopt_long(
-                    argc, argv, "i:o:tls:d:fpLvqhn",
+                    argc, argv, "i:o:tEls:d:fpLvqhn",
                     long_options, &option_index
                 );
 
@@ -451,6 +454,9 @@ int main(int argc, char** argv)
                 break;
             case 't':
                 text = 1;
+                break;
+            case 'E':
+                urlencode = 1;
                 break;
             case 'h':
                 usage = 1;
@@ -695,7 +701,7 @@ daos_setup_done:
         if (!text) {
             mfu_flist_write_cache(outputname, flist);
         } else {
-            mfu_flist_write_text(outputname, flist);
+            mfu_flist_write_text(outputname, flist, urlencode);
         }
     }
 
