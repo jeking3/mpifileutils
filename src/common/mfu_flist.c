@@ -389,6 +389,7 @@ void mfu_flist_insert_stat(flist_t* flist, const char* fpath, mode_t mode, const
         elem->ctime_nsec = nsecs;
 
         elem->size  = (uint64_t) sb->st_size;
+        elem->ino   = (uint64_t) sb->st_ino;
 
         /* TODO: link to user and group names? */
     }
@@ -983,6 +984,17 @@ uint64_t mfu_flist_file_get_size(mfu_flist bflist, uint64_t idx)
     elem_t* elem = list_get_elem(flist, idx);
     if (elem != NULL && flist->detail) {
         ret = elem->size;
+    }
+    return ret;
+}
+
+uint64_t mfu_flist_file_get_ino(mfu_flist bflist, uint64_t idx)
+{
+    uint64_t ret = (uint64_t) 0;
+    flist_t* flist = (flist_t*) bflist;
+    elem_t* elem = list_get_elem(flist, idx);
+    if (elem != NULL && flist->detail) {
+        ret = elem->ino;
     }
     return ret;
 }
