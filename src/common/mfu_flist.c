@@ -125,7 +125,7 @@ static size_t list_elem_pack2_size(int detail, uint64_t chars, const elem_t* ele
 {
     size_t size;
     if (detail) {
-        size = 2 * 4 + chars + 0 * 4 + 10 * 8;
+        size = 2 * 4 + chars + 0 * 4 + 11 * 8;
     }
     else {
         size = 2 * 4 + chars + 1 * 4;
@@ -178,6 +178,7 @@ static size_t list_elem_pack2(void* buf, int detail, uint64_t chars, const elem_
         mfu_pack_uint64(&ptr, elem->ctime);
         mfu_pack_uint64(&ptr, elem->ctime_nsec);
         mfu_pack_uint64(&ptr, elem->size);
+        mfu_pack_uint64(&ptr, elem->ino);
     }
     else {
         /* just have the file type */
@@ -233,6 +234,7 @@ static size_t list_elem_unpack2(const void* buf, elem_t* elem)
         mfu_unpack_uint64(&ptr, &elem->ctime);
         mfu_unpack_uint64(&ptr, &elem->ctime_nsec);
         mfu_unpack_uint64(&ptr, &elem->size);
+        mfu_unpack_uint64(&ptr, &elem->ino);
         /* use mode to set file type */
         elem->type = mfu_flist_mode_to_filetype((mode_t)elem->mode);
     }
@@ -346,6 +348,7 @@ static void list_insert_copy(flist_t* flist, elem_t* src)
     elem->ctime      = src->ctime;
     elem->ctime_nsec = src->ctime_nsec;
     elem->size       = src->size;
+    elem->ino        = src->ino;
 
 #ifdef DAOS_SUPPORT
     elem->obj_id_lo  = src->obj_id_lo;
@@ -394,6 +397,7 @@ void mfu_flist_insert_stat(flist_t* flist, const char* fpath, mode_t mode, const
         elem->ctime_nsec = nsecs;
 
         elem->size  = (uint64_t) sb->st_size;
+        elem->ino   = (uint64_t) sb->st_ino;
 
         /* TODO: link to user and group names? */
     }
@@ -994,6 +998,17 @@ uint64_t mfu_flist_file_get_size(mfu_flist bflist, uint64_t idx)
     return ret;
 }
 
+uint64_t mfu_flist_file_get_ino(mfu_flist bflist, uint64_t idx)
+{
+    uint64_t ret = (uint64_t) 0;
+    flist_t* flist = (flist_t*) bflist;
+    elem_t* elem = list_get_elem(flist, idx);
+    if (elem != NULL && flist->detail) {
+        ret = elem->ino;
+    }
+    return ret;
+}
+
 const char* mfu_flist_file_get_username(mfu_flist bflist, uint64_t idx)
 {
     const char* ret = NULL;
@@ -1174,6 +1189,16 @@ void mfu_flist_file_set_size(mfu_flist bflist, uint64_t idx, uint64_t size)
     elem_t* elem = list_get_elem(flist, idx);
     if (elem != NULL) {
         elem->size = size;
+    }
+    return;
+}
+
+void mfu_flist_file_set_ino(mfu_flist bflist, uint64_t idx, uint64_t ino)
+{
+    flist_t* flist = (flist_t*) bflist;
+    elem_t* elem = list_get_elem(flist, idx);
+    if (elem != NULL) {
+        elem->ino = ino;
     }
     return;
 }
@@ -1360,6 +1385,7 @@ uint64_t mfu_flist_file_create(mfu_flist bflist)
     elem->ctime      = 0;
     elem->ctime_nsec = 0;
     elem->size       = 0;
+    elem->ino        = 0;
 
     /* for DAOS */
 #ifdef DAOS_SUPPORT

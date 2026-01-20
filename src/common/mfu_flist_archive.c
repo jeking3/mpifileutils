@@ -3880,6 +3880,9 @@ static void insert_entry_into_flist(
 
     uint64_t size = archive_entry_size(entry);
     mfu_flist_file_set_size(flist, idx, size);
+
+    uint64_t ino = (uint64_t) archive_entry_ino64(entry);
+    mfu_flist_file_set_ino(flist, idx, ino);
 }
 
 /* Given an archvive file, build file list of corresponding items,
