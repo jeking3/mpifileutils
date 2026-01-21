@@ -48,6 +48,13 @@ OPTIONS
 
    Walk file system without stat.
 
+.. option:: -Z, --lazy-stat
+
+   Accept whatever file attributes the file system has cached rather than
+   fetching authoritative ones. Faster on network file systems, but the
+   reported size and allocation may be stale. Requires statx support;
+   without it the option warns and has no effect.
+
 .. option:: -s, --sort FIELD
 
    Sort output by comma-delimited fields (see below).

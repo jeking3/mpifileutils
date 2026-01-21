@@ -80,6 +80,11 @@ extern mfu_loglevel mfu_debug_level;
 /* defines timeout period between progress messages */
 extern int mfu_progress_timeout;
 
+/* when set, stat calls accept whatever attributes the file system has
+ * cached rather than fetching authoritative ones, which is faster but
+ * may report stale size and allocation */
+extern int mfu_lazy_stat;
+
 #define MFU_LOG(level, ...) do {  \
         if (mfu_initialized && level <= mfu_debug_level) { \
             char timestamp[256]; \

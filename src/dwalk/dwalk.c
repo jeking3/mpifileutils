@@ -316,6 +316,7 @@ static void print_usage(void)
     printf("  -t, --text              - use with -o; write processed list to file in ascii format\n");
     printf("  -E, --urlencode         - use with -t; percent-encode ASCII control characters in filenames\n");
     printf("  -l, --lite              - walk file system without stat\n");
+    printf("  -Z, --lazy-stat         - accept cached attributes; faster, but size and allocation may be stale\n");
     printf("  -s, --sort <fields>     - sort output by comma-delimited fields\n");
     printf("  -d, --distribution <field>:<separators> \n                          - print distribution by field\n");
     printf("  -f, --file_histogram, --file-histogram\n");
@@ -391,6 +392,7 @@ int main(int argc, char** argv)
         {"text",           0, 0, 't'},
         {"urlencode",      0, 0, 'E'},
         {"lite",           0, 0, 'l'},
+        {"lazy-stat",      0, 0, 'Z'},
         {"sort",           1, 0, 's'},
         {"distribution",   1, 0, 'd'},
         {"file_histogram", 0, 0, 'f'},
@@ -408,7 +410,7 @@ int main(int argc, char** argv)
     int usage = 0;
     while (1) {
         int c = getopt_long(
-                    argc, argv, "i:o:tEls:d:fpLvqhn",
+                    argc, argv, "i:o:tEZls:d:fpLvqhn",
                     long_options, &option_index
                 );
 
@@ -426,6 +428,10 @@ int main(int argc, char** argv)
             case 'l':
                 /* don't stat each file on the walk */
                 walk_opts->use_stat = 0;
+                break;
+            case 'Z':
+                /* accept cached attributes, which may be stale */
+                mfu_lazy_stat = 1;
                 break;
             case 's':
                 sortfields = MFU_STRDUP(optarg);
@@ -480,6 +486,13 @@ int main(int argc, char** argv)
         }
         usage = 1;
     }
+
+#ifndef HAVE_STATX
+    /* the option is always accepted so scripts work across builds */
+    if (mfu_lazy_stat && rank == 0) {
+        MFU_LOG(MFU_LOG_WARN, "--lazy-stat has no effect, built without statx support");
+    }
+#endif
 
     /* print usage if we need to */
     if (usage) {

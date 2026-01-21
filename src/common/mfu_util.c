@@ -41,6 +41,9 @@ mfu_loglevel mfu_debug_level = MFU_LOG_ERR;
 /* default progress message timeout in seconds */
 int mfu_progress_timeout = 10;
 
+/* default to use a consistent stat instead of a lazy one */
+int mfu_lazy_stat = 0;
+
 /* initialize mfu library,
  * reference counting allows for multiple init/finalize pairs */
 int mfu_init()
