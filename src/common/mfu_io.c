@@ -14,6 +14,10 @@
 #include <assert.h>
 #include <libgen.h>
 
+#ifdef HAVE_SYS_SYSMACROS_H
+#include <sys/sysmacros.h>
+#endif
+
 #if DCOPY_USE_XATTRS
 #include <sys/xattr.h>
 #endif
@@ -319,10 +323,61 @@ int daos_lstat(const char* path, struct stat* buf, mfu_file_t* mfu_file)
 #endif
 }
 
+#ifdef HAVE_STATX
+/* Helper function to convert struct statx to struct stat.
+ * This is designed to be fast and inline-able since it's in the hot path. */
+static inline void statx_to_stat(const struct statx* stx, struct stat* buf)
+{
+    buf->st_dev     = makedev(stx->stx_dev_major, stx->stx_dev_minor);
+    buf->st_ino     = stx->stx_ino;
+    buf->st_mode    = stx->stx_mode;
+    buf->st_nlink   = stx->stx_nlink;
+    buf->st_uid     = stx->stx_uid;
+    buf->st_gid     = stx->stx_gid;
+    buf->st_rdev    = makedev(stx->stx_rdev_major, stx->stx_rdev_minor);
+    buf->st_size    = stx->stx_size;
+    buf->st_blksize = stx->stx_blksize;
+    buf->st_blocks  = stx->stx_blocks;
+    buf->st_atime   = stx->stx_atime.tv_sec;
+    buf->st_mtime   = stx->stx_mtime.tv_sec;
+    buf->st_ctime   = stx->stx_ctime.tv_sec;
+#ifdef __USE_XOPEN2K8
+    buf->st_atim.tv_nsec = stx->stx_atime.tv_nsec;
+    buf->st_mtim.tv_nsec = stx->stx_mtime.tv_nsec;
+    buf->st_ctim.tv_nsec = stx->stx_ctime.tv_nsec;
+#endif
+}
+#endif
+
 int mfu_lstat(const char* path, struct stat* buf) {
     int rc;
     int tries = MFU_IO_TRIES;
+
 retry:
+#ifdef HAVE_STATX
+    /*
+     * Use statx() with AT_STATX_DONT_SYNC for efficiency.
+     * This avoids syncing file attributes from the server on network
+     * filesystems, which can provide significant performance improvement
+     * (15% seen in large scale testing).
+     */
+    struct statx stxbuf;
+    errno = 0;
+    rc = statx(AT_FDCWD, path, AT_SYMLINK_NOFOLLOW | AT_STATX_DONT_SYNC,
+               STATX_BASIC_STATS, &stxbuf);
+    if (rc != 0) {
+        if (errno == EINTR || errno == EIO) {
+            tries--;
+            if (tries > 0) {
+                usleep(MFU_IO_USLEEP);
+                goto retry;
+            }
+        }
+    } else {
+        /* convert statx result to stat structure */
+        statx_to_stat(&stxbuf, buf);
+    }
+#else
     errno = 0;
     rc = lstat(path, buf);
     if (rc != 0) {
@@ -335,6 +390,8 @@ retry:
             }
         }
     }
+#endif
+
     return rc;
 }
 

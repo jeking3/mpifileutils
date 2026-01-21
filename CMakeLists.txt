@@ -75,6 +75,9 @@ ENDIF(ENABLE_GPFS)
 OPTION(ENABLE_EXPERIMENTAL "Build experimental tools" OFF)
 MESSAGE(STATUS "ENABLE_EXPERIMENTAL: ${ENABLE_EXPERIMENTAL}")
 
+OPTION(ENABLE_STATX "Enable statx() with AT_STATX_DONT_SYNC" OFF)
+MESSAGE(STATUS "ENABLE_STATX: ${ENABLE_STATX}")
+
 ## HEADERS
 INCLUDE(CheckIncludeFile)
 CHECK_INCLUDE_FILE(byteswap.h HAVE_BYTESWAP_H)
@@ -83,6 +86,28 @@ if(HAVE_BYTESWAP_H)
 ELSE(HAVE_BYTESWAP_H)
   MESSAGE(SEND_ERROR "byteswap.h is required")
 ENDIF(HAVE_BYTESWAP_H)
+
+IF(ENABLE_STATX)
+  CHECK_INCLUDE_FILE(sys/sysmacros.h HAVE_SYS_SYSMACROS_H)
+  IF(HAVE_SYS_SYSMACROS_H)
+    ADD_DEFINITIONS(-DHAVE_SYS_SYSMACROS_H)
+  ENDIF()
+
+  ## Check for statx() syscall support (Linux 4.11+)
+  INCLUDE(CheckSymbolExists)
+  SET(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+  CHECK_SYMBOL_EXISTS(statx "sys/stat.h" HAVE_STATX_FUNC)
+  UNSET(CMAKE_REQUIRED_DEFINITIONS)
+  IF(HAVE_STATX_FUNC AND HAVE_SYS_SYSMACROS_H)
+    ADD_DEFINITIONS(-D_GNU_SOURCE)
+    ADD_DEFINITIONS(-DHAVE_STATX)
+    MESSAGE(STATUS "statx() syscall: enabled (found statx and sys/sysmacros.h)")
+  ELSEIF(HAVE_STATX_FUNC AND NOT HAVE_SYS_SYSMACROS_H)
+    MESSAGE(ERROR "statx() syscall: disabled (sys/sysmacros.h not found, will use lstat)")
+  ELSE()
+    MESSAGE(ERROR "statx() syscall: disabled (statx not found, will use lstat)")
+  ENDIF()
+ENDIF()
 
 # Dependencies
 
