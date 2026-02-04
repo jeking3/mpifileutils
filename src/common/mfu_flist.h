@@ -137,6 +137,9 @@ typedef struct mfu_perms_t {
     int write;           /* set to 1 if 'w' is given */
     int execute;         /* set to 1 if 'x' is given */
     int capital_execute; /* set to 1 if 'X' is given */
+    int setuid;          /* set to 1 if 's' or 'u' target with 's' */
+    int setgid;          /* set to 1 if 's' or 'g' target with 's' */
+    int sticky;          /* set to 1 if 't' is given */
     int assignment;      /* set to 1 if operation is an assignment (e.g. g=u) */
     char source;         /* records source of target: 'u', 'g', 'a' */
     struct mfu_perms_t* next;  /* pointer to next perms struct in linked list */
