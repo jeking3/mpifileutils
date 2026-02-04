@@ -268,8 +268,11 @@ static int parse_rwx(const char* str, mfu_perms* p)
     p->write           = 0;
     p->execute         = 0;
     p->capital_execute = 0;
+    p->setuid          = 0;
+    p->setgid          = 0;
+    p->sticky          = 0;
 
-    /* set all of the r, w, x, and X flags if valid characters */
+    /* set all of the r, w, x, X, s, and t flags if valid characters */
     do {
         /* set flag based on current character */
         if (str[0] == 'r') {
@@ -283,6 +286,23 @@ static int parse_rwx(const char* str, mfu_perms* p)
         }
         else if (str[0] == 'X') {
             p->capital_execute = 1;
+        }
+        else if (str[0] == 's') {
+            /* 's' sets setuid for user, setgid for group */
+            if (p->usr) {
+                p->setuid = 1;
+            }
+            else if (p->group) {
+                p->setgid = 1;
+            }
+            else {
+                /* found an invalid character so set rc=0 */
+                rc = 0;
+                break;
+            }
+        }
+        else if (str[0] == 't') {
+            p->sticky = 1;
         }
         else if (str[0] == '\0') {
             break;
@@ -826,6 +846,32 @@ static void set_symbolic_bits(const mfu_perms* p, mfu_filetype type, mode_t mask
             if (p->capital_execute) {
                 *mode &= ~S_IXOTH;
             }
+        }
+    }
+
+    /* handle special bits (setuid, setgid, sticky) */
+    if (p->setuid) {
+        if (p->plus) {
+            *mode |= S_ISUID;
+        }
+        else {
+            *mode &= ~S_ISUID;
+        }
+    }
+    if (p->setgid) {
+        if (p->plus) {
+            *mode |= S_ISGID;
+        }
+        else {
+            *mode &= ~S_ISGID;
+        }
+    }
+    if (p->sticky) {
+        if (p->plus) {
+            *mode |= S_ISVTX;
+        }
+        else {
+            *mode &= ~S_ISVTX;
         }
     }
 
