@@ -1,7 +1,62 @@
 # mpiFileUtils
+
 mpiFileUtils provides both a library called [libmfu](src/common/README.md) and a suite of MPI-based tools to manage large datasets, which may vary from large directory trees to large files. High-performance computing users often generate large datasets with parallel applications that run with many processes (millions in some cases). However those users are then stuck with single-process tools like cp and rm to manage their datasets. This suite provides MPI-based tools to handle typical jobs like copy, remove, and compare for such datasets, providing speedups of up to 20-30x.  It also provides a library that simplifies the creation of new tools or can be used in applications.
 
 Documentation is available on [ReadTheDocs](http://mpifileutils.readthedocs.io).
+
+## Docker Build
+
+This repository includes a multi-stage [Dockerfile](Dockerfile) that builds
+mpiFileUtils and its core dependencies (libcircle, lwgrp, dtcmp) and then
+copies the built artifacts into a smaller runtime image.
+
+### Setting build options
+
+All CMake settings (build type, feature flags, compiler flags) are controlled
+through a **CMake initial-cache file** located at
+[cmake/build-options.cmake](cmake/build-options.cmake).  That file is
+loaded with `cmake -C` before `CMakeLists.txt` is read, so it can set any
+CMake cache variable — `CMAKE_BUILD_TYPE`, `CMAKE_C_FLAGS`,
+`CMAKE_EXE_LINKER_FLAGS`, feature toggles, and so on.
+
+To customize the build — for example from a GitLab pipeline in another
+repository — copy your options file over the default before building:
+
+```bash
+# In your pipeline (other repo):
+git clone <this-repo-url> mpifileutils
+cp my-build-options.cmake mpifileutils/cmake/build-options.cmake
+docker build -t mpifileutils:custom mpifileutils/
+```
+
+To build with the defaults (`Release`, all optional features off):
+
+```bash
+docker build -t mpifileutils:local .
+```
+
+Run an interactive shell with the tools on your `PATH`:
+
+```bash
+docker run --rm -it mpifileutils:local
+```
+
+Run one of the tools directly (add volumes for /src and /dst to make it more useful):
+
+```bash
+docker run --rm mpifileutils:local dcp --help
+```
+
+If you need to run `mpirun` inside the container as root, Open MPI typically
+requires additional environment flags, and you may need to pipe some additional
+devices through to get this to work:
+
+```bash
+docker run --rm -it \
+  -e OMPI_ALLOW_RUN_AS_ROOT=1 \
+  -e OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 \
+  mpifileutils:local mpirun -np 2 dfind --help
+```
 
 ## DAOS Support
 
