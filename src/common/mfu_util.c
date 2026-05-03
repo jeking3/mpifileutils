@@ -548,32 +548,28 @@ void mfu_format_mode(mode_t mode, char* buf)
 void mfu_pack_uint32(char** pptr, uint32_t value)
 {
     /* TODO: convert to network order */
-    uint32_t* ptr = *(uint32_t**)pptr;
-    *ptr = value;
+    memcpy(*pptr, &value, sizeof(value));
     *pptr += 4;
 }
 
 void mfu_unpack_uint32(const char** pptr, uint32_t* value)
 {
     /* TODO: convert to host order */
-    const uint32_t* ptr = *(const uint32_t**)pptr;
-    *value = *ptr;
+    memcpy(value, *pptr, sizeof(*value));
     *pptr += 4;
 }
 
 void mfu_pack_uint64(char** pptr, uint64_t value)
 {
     /* TODO: convert to network order */
-    uint64_t* ptr = *(uint64_t**)pptr;
-    *ptr = value;
+    memcpy(*pptr, &value, sizeof(value));
     *pptr += 8;
 }
 
 void mfu_unpack_uint64(const char** pptr, uint64_t* value)
 {
     /* TODO: convert to host order */
-    const uint64_t* ptr = *(const uint64_t**)pptr;
-    *value = *ptr;
+    memcpy(value, *pptr, sizeof(*value));
     *pptr += 8;
 }
 
