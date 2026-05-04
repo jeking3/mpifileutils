@@ -1,5 +1,6 @@
 #include <dirent.h>
 #include <limits.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -54,10 +55,10 @@ static void remove_progress_fn(const uint64_t* vals, int count, int complete, in
     }
 
     if (complete < ranks) {
-        MFU_LOG(MFU_LOG_INFO, "Removed %llu items (%.2f%%) in %.3lf secs (%.3lf items/sec) %d secs remaining ...",
+        MFU_LOG(MFU_LOG_INFO, "Removed %" PRIu64 " items (%.2f%%) in %.3lf secs (%.3lf items/sec) %d secs remaining ...",
             vals[0], percent, secs, rate, (int)secs_remaining);
     } else {
-        MFU_LOG(MFU_LOG_INFO, "Removed %llu items (%.2f%%) in %.3lf secs (%.3lf items/sec) done",
+        MFU_LOG(MFU_LOG_INFO, "Removed %" PRIu64 " items (%.2f%%) in %.3lf secs (%.3lf items/sec) done",
             vals[0], percent, secs, rate);
     }
 }

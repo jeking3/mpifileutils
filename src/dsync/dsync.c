@@ -1542,7 +1542,7 @@ static int dsync_strmap_compare_link_dest(
         if (options.contents) {
             /* comparing contents could take a while */
             if (rank == 0) {
-                MFU_LOG(MFU_LOG_INFO, "Comparing file contents of %llu items with link dest", total_files);
+                MFU_LOG(MFU_LOG_INFO, "Comparing file contents of %" PRIu64 " items with link dest", total_files);
             }
 
             /* compare file contents byte-by-byte, overwrites destination
@@ -1555,7 +1555,7 @@ static int dsync_strmap_compare_link_dest(
         } else {
             /* comparing contents could take a while */
             if (rank == 0) {
-                MFU_LOG(MFU_LOG_INFO, "Comparing file sizes and modification times of %llu items with link dest", total_files);
+                MFU_LOG(MFU_LOG_INFO, "Comparing file sizes and modification times of %" PRIu64 " items with link dest", total_files);
             }
 
             /* assume contents are different if size or mtime are different,
@@ -1841,7 +1841,7 @@ static int dsync_strmap_compare(
         if (options.contents) {
             /* comparing contents could take a while */
             if (rank == 0) {
-                MFU_LOG(MFU_LOG_INFO, "Comparing file contents of %llu items", total_files);
+                MFU_LOG(MFU_LOG_INFO, "Comparing file contents of %" PRIu64 " items", total_files);
             }
 
             /* compare file contents byte-by-byte, overwrites destination
@@ -1859,7 +1859,7 @@ static int dsync_strmap_compare(
         } else {
             /* comparing contents could take a while */
             if (rank == 0) {
-                MFU_LOG(MFU_LOG_INFO, "Comparing file sizes and modification times of %llu items", total_files);
+                MFU_LOG(MFU_LOG_INFO, "Comparing file sizes and modification times of %" PRIu64 " items", total_files);
             }
 
             /* assume contents are different if size or mtime are different,

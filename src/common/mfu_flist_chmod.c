@@ -1,5 +1,6 @@
 #include <dirent.h>
 #include <limits.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -57,10 +58,10 @@ static void chmod_progress_fn(const uint64_t* vals, int count, int complete, int
 
     /* print progress message */
     if (complete < ranks) {
-        MFU_LOG(MFU_LOG_INFO, "Processed %llu items (%.2f%%) in %.3lf secs (%.3lf items/sec) %d secs remaining ...",
+        MFU_LOG(MFU_LOG_INFO, "Processed %" PRIu64 " items (%.2f%%) in %.3lf secs (%.3lf items/sec) %d secs remaining ...",
             vals[0], percent, secs, rate, (int)secs_remaining);
     } else {
-        MFU_LOG(MFU_LOG_INFO, "Processed %llu items (%.2f%%) in %.3lf secs (%.3lf items/sec)",
+        MFU_LOG(MFU_LOG_INFO, "Processed %" PRIu64 " items (%.2f%%) in %.3lf secs (%.3lf items/sec)",
             vals[0], percent, secs, rate);
     }
 }

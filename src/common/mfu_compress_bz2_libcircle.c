@@ -118,7 +118,7 @@ static void DBz2_Dequeue(CIRCLE_handle* handle)
     /* read block from input file */
     ssize_t inSize = mfu_read(src_name, fd, ibuf, nread);
     if (inSize != nread) {
-        MFU_LOG(MFU_LOG_ERR, "Failed to read from source file: %s offset=%lx got=%d expected=%d errno=%d (%s)",
+        MFU_LOG(MFU_LOG_ERR, "Failed to read from source file: %s offset=%lx got=%zd expected=%zu errno=%d (%s)",
             src_name, pos, inSize, nread, errno, strerror(errno));
         //rc = MFU_FAILURE;
         //continue;
@@ -416,7 +416,7 @@ int mfu_compress_bz2_libcircle(const char* src, const char* dst, int b_size, ssi
             size_t my_length = (size_t) my_blocks[my_prev_blocks + k].length;
             ssize_t nwritten = mfu_write(dst_name, fd_out, a[k], my_length);
             if (nwritten != my_length) {
-                MFU_LOG(MFU_LOG_ERR, "Failed to write compressed block to target file: %s offset=%lx got=%d expected=%d errno=%d (%s)",
+                MFU_LOG(MFU_LOG_ERR, "Failed to write compressed block to target file: %s offset=%lx got=%zd expected=%zu errno=%d (%s)",
                     dst_name, pos, nwritten, my_length, errno, strerror(errno));
                 rc = MFU_FAILURE;
             }
@@ -454,7 +454,7 @@ int mfu_compress_bz2_libcircle(const char* src, const char* dst, int b_size, ssi
         int64_t net_offset = mfu_hton64(my_offset);
         ssize_t nwritten = mfu_write(dst_name, fd_out, &net_offset, 8);
         if (nwritten != 8) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to write block offset to target file: %s pos=%lx got=%d expected=%d errno=%d (%s)",
+            MFU_LOG(MFU_LOG_ERR, "Failed to write block offset to target file: %s pos=%lx got=%zd expected=%d errno=%d (%s)",
                 dst_name, pos, nwritten, 8, errno, strerror(errno));
             rc = MFU_FAILURE;
         }
@@ -464,7 +464,7 @@ int mfu_compress_bz2_libcircle(const char* src, const char* dst, int b_size, ssi
         int64_t net_length = mfu_hton64(my_length);
         nwritten = mfu_write(dst_name, fd_out, &net_length, 8);
         if (nwritten != 8) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to write block length to target file: %s pos=%lx got=%d expected=%d errno=%d (%s)",
+            MFU_LOG(MFU_LOG_ERR, "Failed to write block length to target file: %s pos=%lx got=%zd expected=%d errno=%d (%s)",
                 dst_name, pos+8, nwritten, 8, errno, strerror(errno));
             rc = MFU_FAILURE;
         }
@@ -494,7 +494,7 @@ int mfu_compress_bz2_libcircle(const char* src, const char* dst, int b_size, ssi
         size_t footer_size = 6 * 8;
         ssize_t nwritten = mfu_write(dst_name, fd_out, footer, footer_size);
         if (nwritten != footer_size) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to write footer to target file: %s pos=%lx got=%d expected=%d errno=%d (%s)",
+            MFU_LOG(MFU_LOG_ERR, "Failed to write footer to target file: %s pos=%lx got=%zd expected=%zu errno=%d (%s)",
                 dst_name, pos, nwritten, footer_size, errno, strerror(errno));
             rc = MFU_FAILURE;
         }

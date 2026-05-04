@@ -13,6 +13,7 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <limits.h>
+#include <inttypes.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -934,8 +935,8 @@ int mfu_compare_contents(
 
                 /* check for write error */
                 if (bytes_written < 0) {
-                    MFU_LOG(MFU_LOG_ERR, "Failed to write `%s' at offset %llx (errno=%d %s)", 
-                        dst_name, (unsigned long long)off + n, strerror(errno));
+                    MFU_LOG(MFU_LOG_ERR, "Failed to write `%s' at offset %jx (errno=%d %s)", 
+                        dst_name, (uintmax_t) off + (uintmax_t) n, errno, strerror(errno));
                     rc = -1;
                     break;
                 }

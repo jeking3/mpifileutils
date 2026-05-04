@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 #include <getopt.h>
 
@@ -50,10 +51,10 @@ static void reln_progress_fn(const uint64_t* vals, int count, int complete, int 
     }
 
     if (complete < ranks) {
-        MFU_LOG(MFU_LOG_INFO, "Processed %llu items (%.2f%%) in %f secs (%f items/sec) %d secs remaining ...",
+        MFU_LOG(MFU_LOG_INFO, "Processed %" PRIu64 " items (%.2f%%) in %f secs (%f items/sec) %d secs remaining ...",
             vals[0], percent, secs, rate, (int)secs_remaining);
     } else {
-        MFU_LOG(MFU_LOG_INFO, "Processed %llu items (%.2f%%) in %f secs (%f items/sec)",
+        MFU_LOG(MFU_LOG_INFO, "Processed %" PRIu64 " items (%.2f%%) in %f secs (%f items/sec)",
             vals[0], percent, secs, rate);
     }
 }

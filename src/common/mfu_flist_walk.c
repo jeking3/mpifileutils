@@ -116,7 +116,7 @@ static int build_path(char* path, size_t path_len, const char* dir, const char* 
         new_len = snprintf(path, path_len, "%s/%s", dir, name);
     }
     if (new_len > path_len) {
-        MFU_LOG(MFU_LOG_ERR, "Path name is too long, %lu chars exceeds limit %lu: '%s/%s'",
+        MFU_LOG(MFU_LOG_ERR, "Path name is too long, %d chars exceeds limit %zu: '%s/%s'",
                 new_len, path_len, dir, name);
         WALK_RESULT = -1;
         return -1;
@@ -767,7 +767,7 @@ void mfu_flist_stat(
         /* check whether we should skip this item */
         if (skip_fn != NULL && skip_fn(name, skip_args)) {
             /* skip this file, don't include it in new list */
-            MFU_LOG(MFU_LOG_INFO, "skip %s");
+            MFU_LOG(MFU_LOG_INFO, "skip %s", name);
             continue;
         }
 

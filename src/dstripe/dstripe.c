@@ -44,10 +44,10 @@ static void create_progress_fn(const uint64_t* vals, int count, int complete, in
     }
 
     if (complete < ranks) {
-        MFU_LOG(MFU_LOG_INFO, "Created %llu files (%.2f%%) in %.3lf secs (%.3lf files/sec) %d secs remaining ...",
+        MFU_LOG(MFU_LOG_INFO, "Created %" PRIu64 " files (%.2f%%) in %.3lf secs (%.3lf files/sec) %d secs remaining ...",
             vals[0], percent, secs, rate, (int)secs_remaining);
     } else {
-        MFU_LOG(MFU_LOG_INFO, "Created %llu files (%.2f%%) in %.3lf secs (%.3lf) done",
+        MFU_LOG(MFU_LOG_INFO, "Created %" PRIu64 " files (%.2f%%) in %.3lf secs (%.3lf) done",
             vals[0], percent, secs, rate);
     }
 }
