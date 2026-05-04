@@ -1679,10 +1679,10 @@ static void dcmp_disjunction_print(
         /* if src and dst don't match src and dest numbers need to
          * be reported separately */
         if (size_src_matched == size_dst_matched) {
-            printf(": %lu (Src: %lu Dest: %lu)", size_src_matched,
+                 printf(": %d (Src: %d Dest: %d)", size_src_matched,
                    size_src_matched, size_dst_matched);
         } else {
-            printf(": N/A (Src: %lu Dest: %lu)", size_src_matched,
+                 printf(": N/A (Src: %d Dest: %d)", size_src_matched,
                    size_dst_matched);
         }
 

@@ -56,7 +56,7 @@ static void DBz2_decompEnqueue(CIRCLE_handle* handle)
         uint64_t net_offset;
         ssize_t nread = mfu_read(src_name, fd, &net_offset, 8);
         if (nread != 8) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to read block offset from source file: %s offset=%lx got=%d expected=%d errno=%d (%s)",
+            MFU_LOG(MFU_LOG_ERR, "Failed to read block offset from source file: %s offset=%lx got=%zd expected=%d errno=%d (%s)",
                 src_name, pos, nread, 8, errno, strerror(errno));
             //rc = MFU_FAILURE;
             break;
@@ -66,7 +66,7 @@ static void DBz2_decompEnqueue(CIRCLE_handle* handle)
         uint64_t net_length;
         nread = mfu_read(src_name, fd, &net_length, 8);
         if (nread != 8) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to read block length from source file: %s offset=%lx got=%d expected=%d errno=%d (%s)",
+            MFU_LOG(MFU_LOG_ERR, "Failed to read block length from source file: %s offset=%lx got=%zd expected=%d errno=%d (%s)",
                 src_name, pos+8, nread, 8, errno, strerror(errno));
             //rc = MFU_FAILURE;
             break;
@@ -128,7 +128,7 @@ static void DBz2_decompDequeue(CIRCLE_handle* handle)
     /* Read compressed block from source file */
     ssize_t inSize = mfu_read(src_name, fd, (char*)ibuf, length);
     if (inSize != (ssize_t)length) {
-        MFU_LOG(MFU_LOG_ERR, "Failed to read block from source file: %s offset=%lx got=%d expected=%d errno=%d (%s)",
+        MFU_LOG(MFU_LOG_ERR, "Failed to read block from source file: %s offset=%lx got=%zd expected=%" PRId64 " errno=%d (%s)",
             src_name, offset, inSize, length, errno, strerror(errno));
         //rc = MFU_FAILURE;
         //break;
@@ -157,7 +157,7 @@ static void DBz2_decompDequeue(CIRCLE_handle* handle)
     /* write decompressed block to target file */
     ssize_t nwritten = mfu_write(dst_name, fd_out, obuf, outSize);
     if (nwritten != outSize) {
-        MFU_LOG(MFU_LOG_ERR, "Failed to write block in target file: %s offset=%lx got=%d expected=%d errno=%d (%s)",
+        MFU_LOG(MFU_LOG_ERR, "Failed to write block in target file: %s offset=%lx got=%zd expected=%u errno=%d (%s)",
             dst_name, in_offset, nwritten, outSize, errno, strerror(errno));
         //rc = MFU_FAILURE;
         //break;

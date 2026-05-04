@@ -14,6 +14,7 @@
 #define _LARGEFILE64_SOURCE
 
 #include <errno.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -486,7 +487,7 @@ static int encode_header(
                     target[readlink_rc] = '\0';
                     archive_entry_copy_symlink(entry, target);
                 } else {
-                    MFU_LOG(MFU_LOG_ERR, "Link target of `%s' exceeds buffer size %llu",
+                    MFU_LOG(MFU_LOG_ERR, "Link target of `%s' exceeds buffer size %zu",
                         fname, targetsize
                     );
                     rc = MFU_FAILURE;
@@ -543,7 +544,7 @@ static int write_header(
     /* write header to archive for this entry */
     ssize_t pwrite_rc = mfu_pwrite(filename, fd, buf, header_size, offset);
     if (pwrite_rc == -1) {
-        MFU_LOG(MFU_LOG_ERR, "Failed to write header for '%s' at offset %llu in archive file '%s' errno=%d %s",
+        MFU_LOG(MFU_LOG_ERR, "Failed to write header for '%s' at offset %" PRIu64 " in archive file '%s' errno=%d %s",
             name, offset, filename, errno, strerror(errno));
         DTAR_err = 1;
         return MFU_FAILURE;
@@ -1459,9 +1460,9 @@ static int write_entry_index_footer(
         if (fd >= 0) {
             /* seek to end of the last entry in the archive */
             off_t seek_rc = mfu_lseek(file, fd, archive_size, SEEK_SET);
-            if (seek_rc == (off_t)-1) {
-               /* failed to seek in file */
-               MFU_LOG(MFU_LOG_ERR, "Failed to seek to offset %llu in '%s' errno=%d %s",
+                if (seek_rc == (off_t)-1) {
+                    /* failed to seek in file */
+                    MFU_LOG(MFU_LOG_ERR, "Failed to seek to offset %" PRIu64 " in '%s' errno=%d %s",
                    archive_size, file, errno, strerror(errno)
                );
                rc = MFU_FAILURE;
@@ -2710,7 +2711,7 @@ int mfu_flist_archive_create(
         size_t bufsize = sizeof(buf);
         ssize_t pwrite_rc = mfu_pwrite(filename, fd, buf, bufsize, archive_size);
         if (pwrite_rc != bufsize) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to write to archive '%s' at offset %llu errno=%d %s",
+            MFU_LOG(MFU_LOG_ERR, "Failed to write to archive '%s' at offset %" PRIu64 " errno=%d %s",
                 filename, archive_size, errno, strerror(errno));
             DTAR_err = 1;
         }
@@ -2940,7 +2941,7 @@ static int index_entries(
             uint64_t filter_bytes = archive_filter_bytes(a, i);
             int filter_code = archive_filter_code(a, i);
             const char* filter_name = archive_filter_name(a, i);
-            printf("bytes=%llu code=%d name=%s\n", filter_bytes, filter_code, filter_name);
+            printf("bytes=%" PRIu64 " code=%d name=%s\n", filter_bytes, filter_code, filter_name);
         }
 #endif
 
@@ -2994,7 +2995,7 @@ static int index_entries(
                 if (percent > 0.0) {
                     secs_remaining = (double)(100.0 - percent) * secs / percent;
                 }
-                MFU_LOG(MFU_LOG_INFO, "Indexed %llu items in %.3lf secs (%.0f%%) %.0f secs left ...",
+                MFU_LOG(MFU_LOG_INFO, "Indexed %" PRIu64 " items in %.3lf secs (%.0f%%) %.0f secs left ...",
                     count, secs, percent, secs_remaining
                 );
                 last = now;
@@ -3008,7 +3009,7 @@ static int index_entries(
             mfu_progress_timeout > 0 &&
             secs > mfu_progress_timeout)
         {
-            MFU_LOG(MFU_LOG_INFO, "Indexed %llu items in %.3lf secs (100%%) done",
+            MFU_LOG(MFU_LOG_INFO, "Indexed %" PRIu64 " items in %.3lf secs (100%%) done",
                 count, secs
             );
         }
@@ -3651,8 +3652,8 @@ static int index_entries_distread(
 
             /* seek to offset within the archive file */
             int lseek_rc = mfu_lseek(filename, fd, offset, SEEK_SET);
-            if (lseek_rc == (off_t)-1) {
-               MFU_LOG(MFU_LOG_ERR, "Failed to seek to offset %llu in archive file '%s' errno=%d %s",
+                if (lseek_rc == (off_t)-1) {
+                    MFU_LOG(MFU_LOG_ERR, "Failed to seek to offset %jd in archive file '%s' errno=%d %s",
                    offset, filename, errno, strerror(errno));
                rc = MFU_FAILURE;
             }
@@ -3766,7 +3767,7 @@ static int index_entries_distread(
                 if (percent > 0.0) {
                     secs_remaining = (double)(100.0 - percent) * secs / percent;
                 }
-                MFU_LOG(MFU_LOG_INFO, "Indexed %llu items in %.3lf secs (%.0f%%) %.0f secs left ...",
+                MFU_LOG(MFU_LOG_INFO, "Indexed %" PRIu64 " items in %.3lf secs (%.0f%%) %.0f secs left ...",
                     total_count, secs, percent, secs_remaining
                 );
                 last = now;
@@ -3782,7 +3783,7 @@ static int index_entries_distread(
             mfu_progress_timeout > 0 &&
             secs > mfu_progress_timeout)
         {
-            MFU_LOG(MFU_LOG_INFO, "Indexed %llu items in %.3lf secs (100%%) done",
+            MFU_LOG(MFU_LOG_INFO, "Indexed %" PRIu64 " items in %.3lf secs (100%%) done",
                 total_count, secs
             );
         }
@@ -3942,7 +3943,7 @@ static int extract_flist_offsets(
         off_t offset = (off_t) offsets[idx];
         off_t pos = mfu_lseek(filename, fd, offset, SEEK_SET);
         if (pos == (off_t)-1) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to lseek to offset %llu in %s (errno=%d %s)",
+            MFU_LOG(MFU_LOG_ERR, "Failed to lseek to offset %jd in %s (errno=%d %s)",
                 offset, filename, errno, strerror(errno)
             );
             rc = MFU_FAILURE;
@@ -3961,7 +3962,7 @@ static int extract_flist_offsets(
         /* can use a small block size since we're just reading header info */
         r = archive_read_open_fd(a, fd, 10240);
         if (r != ARCHIVE_OK) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to open archive to extract entry %llu at offset %llu %s",
+            MFU_LOG(MFU_LOG_ERR, "Failed to open archive to extract entry %" PRIu64 " at offset %jd %s",
                 idx, offset, archive_error_string(a)
             );
             archive_read_free(a);
@@ -3973,7 +3974,7 @@ static int extract_flist_offsets(
         struct archive_entry* entry;
         r = archive_read_next_header(a, &entry);
         if (r == ARCHIVE_EOF) {
-            MFU_LOG(MFU_LOG_ERR, "Unexpected end of archive, read %llu of %llu entries",
+            MFU_LOG(MFU_LOG_ERR, "Unexpected end of archive, read %" PRIu64 " of %" PRIu64 " entries",
                 count, entry_count
             );
             archive_read_close(a);
@@ -3982,7 +3983,7 @@ static int extract_flist_offsets(
             break;
         }
         if (r != ARCHIVE_OK) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to extract entry %llu at offset %llu %s",
+            MFU_LOG(MFU_LOG_ERR, "Failed to extract entry %" PRIu64 " at offset %jd %s",
                 idx, offset, archive_error_string(a)
             );
             archive_read_close(a);
@@ -4001,7 +4002,7 @@ static int extract_flist_offsets(
         /* close out the read archive, to be sure it doesn't have memory */
         r = archive_read_close(a);
         if (r != ARCHIVE_OK) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to close archive after extracting entry %llu at offset %llu %s",
+            MFU_LOG(MFU_LOG_ERR, "Failed to close archive after extracting entry %" PRIu64 " at offset %jd %s",
                 idx, offset, archive_error_string(a)
             );
             archive_read_free(a);
@@ -4012,7 +4013,7 @@ static int extract_flist_offsets(
         /* release read archive */
         r = archive_read_free(a);
         if (r != ARCHIVE_OK) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to free archive after extracting entry %llu at offset %llu %s",
+            MFU_LOG(MFU_LOG_ERR, "Failed to free archive after extracting entry %" PRIu64 " at offset %jd %s",
                 idx, offset, archive_error_string(a)
             );
             rc = MFU_FAILURE;
@@ -4171,12 +4172,12 @@ static void extract2_progress_fn(const uint64_t* vals, int count, int complete, 
 
     if (complete < ranks) {
         MFU_LOG(MFU_LOG_INFO,
-            "Extracted %llu items and %.3lf %s (%.0f%%) in %.3lf secs (%.3lf items/sec, %.3lf %s) %.0f secs left ...",
+            "Extracted %" PRIu64 " items and %.3lf %s (%.0f%%) in %.3lf secs (%.3lf items/sec, %.3lf %s) %.0f secs left ...",
             vals[REDUCE_ITEMS], bytes_val, bytes_units, percent, secs, item_rate, bw_val, bw_units, secs_remaining
         );
     } else {
         MFU_LOG(MFU_LOG_INFO,
-            "Extracted %llu items and %.3lf %s (%.0f%%) in %.3lf secs (%.3lf items/sec, %.3lf %s) done",
+            "Extracted %" PRIu64 " items and %.3lf %s (%.0f%%) in %.3lf secs (%.3lf items/sec, %.3lf %s) done",
             vals[REDUCE_ITEMS], bytes_val, bytes_units, percent, secs, item_rate, bw_val, bw_units
         );
     }
@@ -4322,7 +4323,7 @@ static int extract_files_offsets_libarchive(
         off_t offset = (off_t) offsets[idx];
         off_t pos = mfu_lseek(filename, fd, offset, SEEK_SET);
         if (pos == (off_t)-1) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to seek to offset %llu in open archive: '%s' errno=%d %s",
+            MFU_LOG(MFU_LOG_ERR, "Failed to seek to offset %jd in open archive: '%s' errno=%d %s",
                 offset, filename, errno, strerror(errno)
             );
             rc = MFU_FAILURE;
@@ -4345,7 +4346,7 @@ static int extract_files_offsets_libarchive(
          * region of the file */
         r = archive_read_open_fd(a, fd, opts->buf_size);
         if (r != ARCHIVE_OK) {
-            MFU_LOG(MFU_LOG_ERR, "opening archive to extract entry %llu at offset %llu %s",
+            MFU_LOG(MFU_LOG_ERR, "opening archive to extract entry %" PRIu64 " at offset %jd %s",
                 idx, offset, archive_error_string(a)
             );
             archive_read_free(a);
@@ -4357,7 +4358,7 @@ static int extract_files_offsets_libarchive(
         struct archive_entry* entry;
         r = archive_read_next_header(a, &entry);
         if (r == ARCHIVE_EOF) {
-            MFU_LOG(MFU_LOG_ERR, "unexpected end of archive, read %llu of %llu items",
+            MFU_LOG(MFU_LOG_ERR, "unexpected end of archive, read %" PRIu64 " of %" PRIu64 " items",
                 count, entry_count
             );
             archive_read_close(a);
@@ -4366,7 +4367,7 @@ static int extract_files_offsets_libarchive(
             break;
         }
         if (r != ARCHIVE_OK) {
-            MFU_LOG(MFU_LOG_ERR, "extracting entry %llu at offset %llu %s",
+            MFU_LOG(MFU_LOG_ERR, "extracting entry %" PRIu64 " at offset %jd %s",
                 idx, offset, archive_error_string(a)
             );
             archive_read_close(a);
@@ -4379,7 +4380,7 @@ static int extract_files_offsets_libarchive(
          * then copy data */
         r = archive_write_header(ext, entry);
         if (r != ARCHIVE_OK) {
-            MFU_LOG(MFU_LOG_ERR, "writing entry %llu at offset %llu %s",
+            MFU_LOG(MFU_LOG_ERR, "writing entry %" PRIu64 " at offset %jd %s",
                 idx, offset, archive_error_string(ext)
             );
             archive_read_close(a);
@@ -4401,7 +4402,7 @@ static int extract_files_offsets_libarchive(
          * e.g., turn off write bit on a file we just wrote or set timestamps */
         r = archive_write_finish_entry(ext);
         if (r != ARCHIVE_OK) {
-            MFU_LOG(MFU_LOG_ERR, "finish writing entry %llu at offset %llu %s",
+            MFU_LOG(MFU_LOG_ERR, "finish writing entry %" PRIu64 " at offset %jd %s",
                 idx, offset, archive_error_string(ext)
             );
             rc = MFU_FAILURE;
@@ -4854,7 +4855,7 @@ static int extract_files(
             break;
         }
         if (r != ARCHIVE_OK) {
-            MFU_LOG(MFU_LOG_ERR, "extracting entry %llu %s",
+            MFU_LOG(MFU_LOG_ERR, "extracting entry %" PRIu64 " %s",
                 count, archive_error_string(a)
             );
             rc = MFU_FAILURE;
@@ -4866,7 +4867,7 @@ static int extract_files(
             /* create item on disk */
             r = archive_write_header(ext, entry);
             if (r != ARCHIVE_OK) {
-                MFU_LOG(MFU_LOG_ERR, "writing entry %llu %s",
+                MFU_LOG(MFU_LOG_ERR, "writing entry %" PRIu64 " %s",
                     count, archive_error_string(ext)
                 );
                 rc = MFU_FAILURE;
@@ -4884,7 +4885,7 @@ static int extract_files(
              * e.g., turn off write bit on a file we just wrote or set timestamps */
             r = archive_write_finish_entry(ext);
             if (r != ARCHIVE_OK) {
-                MFU_LOG(MFU_LOG_ERR, "finish writing entry %llu %s",
+                MFU_LOG(MFU_LOG_ERR, "finish writing entry %" PRIu64 " %s",
                     count, archive_error_string(ext)
                 );
                 rc = MFU_FAILURE;
@@ -5034,7 +5035,7 @@ static int extract_symlinks(
         off_t offset = (off_t) offsets[global_idx];
         off_t pos = mfu_lseek(filename, fd, offset, SEEK_SET);
         if (pos == (off_t)-1) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to seek to offset %llu in open archive: '%s' errno=%d %s",
+            MFU_LOG(MFU_LOG_ERR, "Failed to seek to offset %jd in open archive: '%s' errno=%d %s",
                 offset, filename, errno, strerror(errno)
             );
             rc = MFU_FAILURE;
@@ -5053,7 +5054,7 @@ static int extract_symlinks(
         /* use a small read block size, since we just need the header */
         int r = archive_read_open_fd(a, fd, 10240);
         if (r != ARCHIVE_OK) {
-            MFU_LOG(MFU_LOG_ERR, "opening archive to extract symlink `%s' at offset %llu %s",
+            MFU_LOG(MFU_LOG_ERR, "opening archive to extract symlink `%s' at offset %jd %s",
                 name, offset, archive_error_string(a)
             );
             archive_read_free(a);
@@ -5065,7 +5066,7 @@ static int extract_symlinks(
         struct archive_entry* entry;
         r = archive_read_next_header(a, &entry);
         if (r == ARCHIVE_EOF) {
-            MFU_LOG(MFU_LOG_ERR, "Unexpected end of archive while extracting symlink `%s' at offset %llu",
+            MFU_LOG(MFU_LOG_ERR, "Unexpected end of archive while extracting symlink `%s' at offset %jd",
                 name, offset
             );
             archive_read_close(a);
@@ -5074,7 +5075,7 @@ static int extract_symlinks(
             continue;
         }
         if (r != ARCHIVE_OK) {
-            MFU_LOG(MFU_LOG_ERR, "Extracting symlink '%s' at offset %llu %s",
+            MFU_LOG(MFU_LOG_ERR, "Extracting symlink '%s' at offset %jd %s",
                 name, offset, archive_error_string(a)
             );
             archive_read_close(a);
@@ -5200,7 +5201,7 @@ static int extract_xattrs(
         off_t offset = (off_t) offsets[idx];
         off_t pos = mfu_lseek(filename, fd, offset, SEEK_SET);
         if (pos == (off_t)-1) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to seek to offset %llu in open archive: '%s' errno=%d %s",
+            MFU_LOG(MFU_LOG_ERR, "Failed to seek to offset %jd in open archive: '%s' errno=%d %s",
                 offset, filename, errno, strerror(errno)
             );
             rc = MFU_FAILURE;
@@ -5221,7 +5222,7 @@ static int extract_xattrs(
         /* use a small block size since we're just reading headers */
         int r = archive_read_open_fd(a, fd, 10240);
         if (r != ARCHIVE_OK) {
-            MFU_LOG(MFU_LOG_ERR, "opening archive to extract entry %llu at offset %llu %s",
+            MFU_LOG(MFU_LOG_ERR, "opening archive to extract entry %" PRIu64 " at offset %jd %s",
                 idx, offset, archive_error_string(a)
             );
             archive_read_free(a);
@@ -5233,7 +5234,7 @@ static int extract_xattrs(
         struct archive_entry* entry;
         r = archive_read_next_header(a, &entry);
         if (r == ARCHIVE_EOF) {
-            MFU_LOG(MFU_LOG_ERR, "unexpected end of archive, read %llu of %llu items",
+            MFU_LOG(MFU_LOG_ERR, "unexpected end of archive, read %" PRIu64 " of %" PRIu64 " items",
                 count, entry_count
             );
             archive_read_close(a);
@@ -5242,7 +5243,7 @@ static int extract_xattrs(
             break;
         }
         if (r != ARCHIVE_OK) {
-            MFU_LOG(MFU_LOG_ERR, "extracting entry %llu at offset %llu %s",
+            MFU_LOG(MFU_LOG_ERR, "extracting entry %" PRIu64 " at offset %jd %s",
                 idx, offset, archive_error_string(a)
             );
             archive_read_close(a);
@@ -5278,7 +5279,7 @@ static int extract_xattrs(
                     }
                 } else {
                     /* failed to read xattr */
-                    MFU_LOG(MFU_LOG_ERR, "failed to extract xattr for '%s' of entry %llu at offset %llu",
+                    MFU_LOG(MFU_LOG_ERR, "failed to extract xattr for '%s' of entry %" PRIu64 " at offset %jd",
                         path, idx, offset
                     );
                     rc = MFU_FAILURE;

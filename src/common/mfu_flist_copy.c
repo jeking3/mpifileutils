@@ -7,6 +7,7 @@
 #include <sys/syscall.h>
 
 #include <limits.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -135,12 +136,12 @@ static void mkdir_progress_fn(const uint64_t* vals, int count, int complete, int
 
     if (complete < ranks) {
         MFU_LOG(MFU_LOG_INFO,
-            "Created %llu directories (%.0f%%) in %.3lf secs (%.3lf dirs/sec) %.0f secs left ...",
+            "Created %" PRIu64 " directories (%.0f%%) in %.3lf secs (%.3lf dirs/sec) %.0f secs left ...",
             items, percent, secs, item_rate, secs_remaining
         );
     } else {
         MFU_LOG(MFU_LOG_INFO,
-            "Created %llu directories (%.0f%%) in %.3lf secs (%.3lf dirs/sec) done",
+            "Created %" PRIu64 " directories (%.0f%%) in %.3lf secs (%.3lf dirs/sec) done",
             items, percent, secs, item_rate
         );
     }
@@ -670,10 +671,10 @@ static void meta_progress_fn(const uint64_t* vals, int count, int complete, int 
 #endif
 
     if (complete < ranks) {
-        MFU_LOG(MFU_LOG_INFO, "Updated %llu items in %.3lf secs (%.3lf items/sec) ...",
+        MFU_LOG(MFU_LOG_INFO, "Updated %" PRIu64 " items in %.3lf secs (%.3lf items/sec) ...",
             vals[0], secs, rate);
     } else {
-        MFU_LOG(MFU_LOG_INFO, "Updated %llu items in %.3lf secs (%.3lf items/sec) done",
+        MFU_LOG(MFU_LOG_INFO, "Updated %" PRIu64 " items in %.3lf secs (%.3lf items/sec) done",
             vals[0], secs, rate);
     }
 }
@@ -1086,7 +1087,7 @@ static int mfu_create_directories(
 
     /* indicate to user what phase we're in */
     if (rank == 0) {
-        MFU_LOG(MFU_LOG_INFO, "Creating %llu directories", mkdir_total_count);
+        MFU_LOG(MFU_LOG_INFO, "Creating %" PRIu64 " directories", mkdir_total_count);
     }
 
     /* start progress messages while setting metadata */
@@ -1357,7 +1358,7 @@ static int mfu_create_file(
                  * greater than zero. we will allow the sync to continue on without
                  * setting the COS
                  */
-                MFU_LOG(MFU_LOG_WARN, "mfu_file_lstat() file: `%s' (errno=%d %s) (size=%llu)", dest_path, errno, strerror(errno), hpssst.st_size);
+                    MFU_LOG(MFU_LOG_WARN, "mfu_file_lstat() file: `%s' (errno=%d %s) (size=%jd)", dest_path, errno, strerror(errno), (intmax_t) hpssst.st_size);
             }
 
         } else {
@@ -1448,10 +1449,10 @@ static void create_progress_fn(const uint64_t* vals, int count, int complete, in
     }
 
     if (complete < ranks) {
-        MFU_LOG(MFU_LOG_INFO, "Created %llu items (%.0f%%) in %.3lf secs (%.3lf items/sec) %.0f secs left ...",
+        MFU_LOG(MFU_LOG_INFO, "Created %" PRIu64 " items (%.0f%%) in %.3lf secs (%.3lf items/sec) %.0f secs left ...",
             items, percent, secs, item_rate, secs_remaining);
     } else {
-        MFU_LOG(MFU_LOG_INFO, "Created %llu items (%.0f%%) in %.3lf secs (%.3lf items/sec) done",
+        MFU_LOG(MFU_LOG_INFO, "Created %" PRIu64 " items (%.0f%%) in %.3lf secs (%.3lf items/sec) done",
             items, percent, secs, item_rate);
     }
 }
@@ -1506,7 +1507,7 @@ static int mfu_create_files(
 
     /* indicate to user what phase we're in */
     if (rank == 0) {
-        MFU_LOG(MFU_LOG_INFO, "Creating %llu files.", mknod_total_count);
+        MFU_LOG(MFU_LOG_INFO, "Creating %" PRIu64 " files.", mknod_total_count);
     }
 
     /* start progress messages for creating files */
@@ -1605,7 +1606,7 @@ static int mfu_create_hardlinks(
 
     /* indicate to user what phase we're in */
     if (rank == 0) {
-        MFU_LOG(MFU_LOG_INFO, "Linking %llu files.", mknod_total_count);
+        MFU_LOG(MFU_LOG_INFO, "Linking %" PRIu64 " files.", mknod_total_count);
     }
 
     /* start progress messages for creating files */
@@ -1733,7 +1734,7 @@ static int mfu_copy_file_normal(
         offset + length < file_size && /* not at end of file */
         length % buf_size != 0)        /* length not an integer multiple of block size */
     {
-        MFU_ABORT(-1, "O_DIRECT requires chunk size to be integer multiple of block size %llu",
+        MFU_ABORT(-1, "O_DIRECT requires chunk size to be integer multiple of block size %zu",
             buf_size);
     }
 
@@ -1769,7 +1770,7 @@ static int mfu_copy_file_normal(
             /* try the read a limited number of times then given up with error */
             retries++;
             if (retries == 5) {
-              MFU_LOG(MFU_LOG_ERR, "Source file `%s' exceeded short read limit, maybe shorter than expected size of %llu bytes",
+              MFU_LOG(MFU_LOG_ERR, "Source file `%s' exceeded short read limit, maybe shorter than expected size of %" PRIu64 " bytes",
                   src, file_size);
               return -1;
             }
@@ -1786,7 +1787,7 @@ static int mfu_copy_file_normal(
 
         /* check for early EOF */
         if (bytes_read == 0) {
-            MFU_LOG(MFU_LOG_ERR, "Source file `%s' shorter than expected size of %llu bytes",
+            MFU_LOG(MFU_LOG_ERR, "Source file `%s' shorter than expected size of %" PRIu64 " bytes",
                 src, file_size);
             return -1;
         }
@@ -2061,7 +2062,7 @@ static struct mfu_extent_list * mfu_lseek_get_extents(
     size_t extent_count = 16;
     struct mfu_extent_list* extent_list = mfu_extent_list_realloc(NULL, extent_count);
     if (extent_list == NULL) {
-        MFU_LOG(MFU_LOG_ERR, "Out of memory allocating extent_list with count %d", extent_count);
+        MFU_LOG(MFU_LOG_ERR, "Out of memory allocating extent_list with count %zu", extent_count);
         goto fail_no_extent_list;
     }
 
@@ -2098,12 +2099,12 @@ static struct mfu_extent_list * mfu_lseek_get_extents(
         }
 
         if (idx >= extent_list->mel_extent_count) {
-            MFU_LOG(MFU_LOG_DBG, "Extent count %d is too small, resizing x2", extent_count);
+            MFU_LOG(MFU_LOG_DBG, "Extent count %zu is too small, resizing x2", extent_count);
 
             extent_count *= 2;
             struct mfu_extent_list* new_extent_list = mfu_extent_list_realloc(extent_list, extent_count);
             if (new_extent_list == NULL) {
-                MFU_LOG(MFU_LOG_ERR, "Out of memory allocating extent_list with count %d", extent_count);
+                MFU_LOG(MFU_LOG_ERR, "Out of memory allocating extent_list with count %zu", extent_count);
                 /* need to free the original allocation since the realloc failed */
                 goto fail_free_extent_list;
             }
@@ -2120,7 +2121,7 @@ static struct mfu_extent_list * mfu_lseek_get_extents(
 
     *normal_copy_required = false;
 
-    MFU_LOG(MFU_LOG_DBG, "src %s logical %llu length %llu has %d mapped data hunks",
+    MFU_LOG(MFU_LOG_DBG, "src %s logical %" PRIu64 " length %" PRIu64 " has %d mapped data hunks",
 	src, logical_off, length, extent_list->mel_mapped_extents);
 
     return extent_list;

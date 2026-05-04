@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <unistd.h>
 #include <errno.h>
 #include <limits.h>
@@ -803,7 +804,7 @@ int main (int argc, char *argv[])
             /* check whether we have space to write the file */
             if (file_size > free_size) {
                 /* not enough space for file */
-                MFU_LOG(MFU_LOG_ERR, "Insufficient space for file `%s` filesize=%llu free=%llu", out_file_path, file_size, free_size);
+                MFU_LOG(MFU_LOG_ERR, "Insufficient space for file `%s` filesize=%" PRIu64 " free=%" PRIu64, out_file_path, file_size, free_size);
                 write_error = 1;
             }
         }
@@ -1109,7 +1110,7 @@ if (node_rank == 0) {
 
             errno = 0;
             if (mfu_close(out_file_path, out_file) != 0) {
-                MFU_LOG(MFU_LOG_ERR, "Failed to close file `%s` (%s)", out_file_path, strerror(errno));
+                MFU_LOG(MFU_LOG_ERR, "Failed to close file `%s`: %d (%s)", out_file_path, errno, strerror(errno));
                 write_error = 1;
             }
         }
@@ -1118,14 +1119,14 @@ if (node_rank == 0) {
          * a file by the same name but of different size than a previous copy */
         errno = 0;
         if (mfu_truncate(out_file_path, (off_t) file_size) != 0) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to truncate file `%s`", out_file_path, strerror(errno));
+            MFU_LOG(MFU_LOG_ERR, "Failed to truncate file `%s`: %d (%s)", out_file_path, errno, strerror(errno));
             write_error = 1;
         }
 
         /* have every writer update file mode */
         errno = 0;
         if (mfu_chmod(out_file_path, (mode_t) mode) != 0) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to chmod file `%s`", out_file_path, strerror(errno));
+            MFU_LOG(MFU_LOG_ERR, "Failed to chmod file `%s`: %d (%s)", out_file_path, errno, strerror(errno));
             write_error = 1;
         }
 
@@ -1133,14 +1134,14 @@ if (node_rank == 0) {
         if (write_error) {
             errno = 0;
             if (mfu_unlink(out_file_path) != 0) {
-                MFU_LOG(MFU_LOG_ERR, "Failed to unlink file `%s`", out_file_path, strerror(errno));
+                MFU_LOG(MFU_LOG_ERR, "Failed to unlink file `%s`: %d (%s)", out_file_path, errno, strerror(errno));
             }
         }
     } else {
         /* readers close input file */
         errno = 0;
         if (mfu_close(in_file_path, in_file) != 0) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to close file `%s`", in_file_path, strerror(errno));
+            MFU_LOG(MFU_LOG_ERR, "Failed to close file `%s`: %d (%s)", in_file_path, errno, strerror(errno));
         }
     }
 

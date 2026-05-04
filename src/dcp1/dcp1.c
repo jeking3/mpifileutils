@@ -533,8 +533,8 @@ int main(int argc, \
     DCOPY_user_opts.block_size = DCOPY_blocksize;
 
     if (DCOPY_global_rank == 0) {
-        MFU_LOG(MFU_LOG_INFO, "Chunk size is set to %d", DCOPY_chunksize);
-        MFU_LOG(MFU_LOG_INFO, "Block size is set to %d", DCOPY_blocksize);
+        MFU_LOG(MFU_LOG_INFO, "Chunk size is set to %zu", DCOPY_chunksize);
+        MFU_LOG(MFU_LOG_INFO, "Block size is set to %zu", DCOPY_blocksize);
     }
 
     /** Parse the source and destination paths. */

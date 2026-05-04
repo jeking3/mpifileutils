@@ -200,7 +200,7 @@ int mfu_compress_bz2_static(const char* src_name, const char* dst_name, int b_si
                 /* read block from input file */
                 ssize_t inSize = mfu_read(src_name, fd, ibuf, nread);
                 if (inSize != nread) {
-                    MFU_LOG(MFU_LOG_ERR, "Failed to read from source file: %s offset=%lx got=%d expected=%d errno=%d (%s)",
+                    MFU_LOG(MFU_LOG_ERR, "Failed to read from source file: %s offset=%lx got=%zd expected=%zu errno=%d (%s)",
                         src_name, pos, inSize, nread, errno, strerror(errno));
                     rc = MFU_FAILURE;
                     continue;
@@ -254,7 +254,7 @@ int mfu_compress_bz2_static(const char* src_name, const char* dst_name, int b_si
                 /* write out block */
                 ssize_t nwritten = mfu_write(dst_name, fd_out, a[k], block_lengths[k]);
                 if (nwritten != block_lengths[k]) {
-                    MFU_LOG(MFU_LOG_ERR, "Failed to write compressed block to target file: %s offset=%lx got=%d expected=%d errno=%d (%s)",
+                    MFU_LOG(MFU_LOG_ERR, "Failed to write compressed block to target file: %s offset=%lx got=%zd expected=%" PRIu64 " errno=%d (%s)",
                         dst_name, pos, nwritten, block_lengths[k], errno, strerror(errno));
                     rc = MFU_FAILURE;
                 }
@@ -298,7 +298,7 @@ int mfu_compress_bz2_static(const char* src_name, const char* dst_name, int b_si
         /* write offset of block in destination file */
         ssize_t nwritten = mfu_write(dst_name, fd_out, &my_offsets[k], 8);
         if (nwritten != 8) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to write block offset to target file: %s pos=%lx got=%d expected=%d errno=%d (%s)",
+            MFU_LOG(MFU_LOG_ERR, "Failed to write block offset to target file: %s pos=%lx got=%zd expected=%d errno=%d (%s)",
                 dst_name, pos, nwritten, 8, errno, strerror(errno));
             rc = MFU_FAILURE;
         }
@@ -306,7 +306,7 @@ int mfu_compress_bz2_static(const char* src_name, const char* dst_name, int b_si
         /* write length of block in destination file */
         nwritten = mfu_write(dst_name, fd_out, &my_lengths[k], 8);
         if (nwritten != 8) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to write block length to target file: %s pos=%lx got=%d expected=%d errno=%d (%s)",
+            MFU_LOG(MFU_LOG_ERR, "Failed to write block length to target file: %s pos=%lx got=%zd expected=%d errno=%d (%s)",
                 dst_name, pos+8, nwritten, 8, errno, strerror(errno));
             rc = MFU_FAILURE;
         }
@@ -336,7 +336,7 @@ int mfu_compress_bz2_static(const char* src_name, const char* dst_name, int b_si
         size_t footer_size = 6 * 8;
         ssize_t nwritten = mfu_write(dst_name, fd_out, footer, footer_size);
         if (nwritten != footer_size) {
-            MFU_LOG(MFU_LOG_ERR, "Failed to write footer to target file: %s pos=%lx got=%d expected=%d errno=%d (%s)",
+            MFU_LOG(MFU_LOG_ERR, "Failed to write footer to target file: %s pos=%lx got=%zd expected=%zu errno=%d (%s)",
                 dst_name, pos, nwritten, footer_size, errno, strerror(errno));
             rc = MFU_FAILURE;
         }
@@ -494,8 +494,8 @@ int mfu_decompress_bz2_static(const char* src_name, const char* dst_name)
     /* check that we got correct version number */
     if (version != 1) {
         if (rank == 0) {
-            MFU_LOG(MFU_LOG_ERR, "Source dbz2 file has unsupported version (%llu): %s",
-                (unsigned long long)version, src_name);
+            MFU_LOG(MFU_LOG_ERR, "Source dbz2 file has unsupported version (%" PRIu64 "): %s",
+                version, src_name);
         }
         mfu_close(src_name, fd);
         return MFU_FAILURE;
@@ -548,7 +548,7 @@ int mfu_decompress_bz2_static(const char* src_name, const char* dst_name)
             uint64_t net_offset;
             ssize_t nread = mfu_read(src_name, fd, &net_offset, 8);
             if (nread != 8) {
-                MFU_LOG(MFU_LOG_ERR, "Failed to read block offset from source file: %s offset=%lx got=%d expected=%d errno=%d (%s)",
+                MFU_LOG(MFU_LOG_ERR, "Failed to read block offset from source file: %s offset=%lx got=%zd expected=%d errno=%d (%s)",
                     src_name, pos, nread, 8, errno, strerror(errno));
                 rc = MFU_FAILURE;
                 break;
@@ -558,7 +558,7 @@ int mfu_decompress_bz2_static(const char* src_name, const char* dst_name)
             uint64_t net_length;
             nread = mfu_read(src_name, fd, &net_length, 8);
             if (nread != 8) {
-                MFU_LOG(MFU_LOG_ERR, "Failed to read block length from source file: %s offset=%lx got=%d expected=%d errno=%d (%s)",
+                MFU_LOG(MFU_LOG_ERR, "Failed to read block length from source file: %s offset=%lx got=%zd expected=%d errno=%d (%s)",
                     src_name, pos+8, nread, 8, errno, strerror(errno));
                 rc = MFU_FAILURE;
                 break;
@@ -584,7 +584,7 @@ int mfu_decompress_bz2_static(const char* src_name, const char* dst_name)
             /* Read compressed block from source file */
             ssize_t inSize = mfu_read(src_name, fd, (char*)ibuf, length);
             if (inSize != (ssize_t)length) {
-                MFU_LOG(MFU_LOG_ERR, "Failed to read block from source file: %s offset=%lx got=%d expected=%d errno=%d (%s)",
+                MFU_LOG(MFU_LOG_ERR, "Failed to read block from source file: %s offset=%lx got=%zd expected=%" PRId64 " errno=%d (%s)",
                     src_name, offset, inSize, length, errno, strerror(errno));
                 rc = MFU_FAILURE;
                 break;
@@ -613,7 +613,7 @@ int mfu_decompress_bz2_static(const char* src_name, const char* dst_name)
             /* write decompressed block to target file */
             ssize_t nwritten = mfu_write(dst_name, fd_out, obuf, outSize);
             if (nwritten != outSize) {
-                MFU_LOG(MFU_LOG_ERR, "Failed to write block in target file: %s offset=%lx got=%d expected=%d errno=%d (%s)",
+                MFU_LOG(MFU_LOG_ERR, "Failed to write block in target file: %s offset=%lx got=%zd expected=%u errno=%d (%s)",
                     dst_name, in_offset, nwritten, outSize, errno, strerror(errno));
                 rc = MFU_FAILURE;
                 break;

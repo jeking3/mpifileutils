@@ -150,7 +150,7 @@ static void print_summary(mfu_flist flist, int level)
         MFU_LOG(MFU_LOG_VERBOSE, "    Directories: %llu", (unsigned long long) all_dirs);
         MFU_LOG(MFU_LOG_VERBOSE, "    Files: %llu", (unsigned long long) all_files);
         MFU_LOG(MFU_LOG_VERBOSE, "    Links: %llu", (unsigned long long) all_links);
-        /* MFU_LOG(MFU_LOG_VERBOSE, "  Unknown: %lu", (unsigned long long) all_unknown); */
+        /* MFU_LOG(MFU_LOG_VERBOSE, "  Unknown: %llu", (unsigned long long) all_unknown); */
 
         if (mfu_flist_have_detail(flist)) {
             double agg_size_tmp;
@@ -193,7 +193,7 @@ void fillelem(mfu_flist flist, uint64_t index, char* fname, long int flen, mfu_f
         fmode = S_IFLNK;
     }
     else  {
-        MFU_LOG(MFU_LOG_ERR,"In fillelem() ftype = %ld is not legal value", ftype);
+        MFU_LOG(MFU_LOG_ERR,"In fillelem() ftype = %u is not legal value", ftype);
         exit(EINVAL);
     }
 
@@ -796,7 +796,7 @@ int main(int narg, char** arg)
         MFU_LOG(MFU_LOG_VERBOSE, "parent_path = %s", parent_path);
         MFU_LOG(MFU_LOG_VERBOSE, "ntotal = %d",ntotal);
         MFU_LOG(MFU_LOG_VERBOSE, "nlevels = %d",nlevels);
-        MFU_LOG(MFU_LOG_VERBOSE, "maxflen = %d",maxflen);
+        MFU_LOG(MFU_LOG_VERBOSE, "maxflen = %ld",maxflen);
     }
 
     for (ilev = 1; ilev < nlevels; ilev++) {
