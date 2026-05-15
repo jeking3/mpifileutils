@@ -41,10 +41,15 @@ ENV CXX=mpicxx
 
 WORKDIR /usr/local/src
 
+    # wget -q https://github.com/hpc/libcircle/releases/download/v0.3/libcircle-0.3.0.tar.gz; \
+    # tar -xzf libcircle-0.3.0.tar.gz; \
+    # cd libcircle-0.3.0; \
+
 RUN set -eux; \
-    wget -q https://github.com/hpc/libcircle/releases/download/v0.3/libcircle-0.3.0.tar.gz; \
-    tar -xzf libcircle-0.3.0.tar.gz; \
-    cd libcircle-0.3.0; \
+    git clone -b backtrace-on-mpi-error https://github.com/jeking3/libcircle.git; \
+    cd libcircle; \
+    git checkout 59a194aeaa67868f0159be38547668e2e92b0775; \
+    autoreconf -i; \
     ./configure; \
     make -j"$(nproc)"; \
     make install
