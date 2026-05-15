@@ -35,7 +35,7 @@ static void print_usage(void)
     printf("  -s, --silent           - suppress EPERM error messages\n");
     printf("      --exclude <regex>  - exclude a list of files from command\n");
     printf("      --match   <regex>  - match a list of files from command\n");
-    printf("  -n, --name             - exclude a list of files from command\n");
+    printf("  -n, --name             - change regex to apply to entry name rather than full pathname\n");
     printf("      --progress <N>     - print progress every N seconds\n");
     printf("  -v, --verbose          - verbose output\n");
     printf("  -q, --quiet            - quiet output\n");
