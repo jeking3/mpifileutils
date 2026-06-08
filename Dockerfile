@@ -12,7 +12,7 @@
 #
 # See cmake/build-options-example.cmake for an annotated example.
 
-FROM debian:latest AS build
+FROM debian:bookworm AS build
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -30,6 +30,7 @@ RUN apt-get update && \
       libcap-dev \
       libopenmpi-dev \
       libtool \
+      libxxhash-dev \
       m4 \
       openmpi-bin \
       pkg-config \
@@ -44,6 +45,7 @@ WORKDIR /usr/local/src
 RUN set -eux; \
     wget -q https://github.com/hpc/libcircle/releases/download/v0.3/libcircle-0.3.0.tar.gz; \
     tar -xzf libcircle-0.3.0.tar.gz; \
+    rm libcircle-0.3.0.tar.gz && \
     cd libcircle-0.3.0; \
     ./configure; \
     make -j"$(nproc)"; \
@@ -52,6 +54,7 @@ RUN set -eux; \
 RUN set -eux; \
     wget -q https://github.com/llnl/lwgrp/releases/download/v1.0.6/lwgrp-1.0.6.tar.gz; \
     tar -xzf lwgrp-1.0.6.tar.gz; \
+    rm lwgrp-1.0.6.tar.gz && \
     cd lwgrp-1.0.6; \
     ./configure; \
     make -j"$(nproc)"; \
@@ -60,6 +63,7 @@ RUN set -eux; \
 RUN set -eux; \
     wget -q https://github.com/llnl/dtcmp/releases/download/v1.1.5/dtcmp-1.1.5.tar.gz; \
     tar -xzf dtcmp-1.1.5.tar.gz; \
+    rm dtcmp-1.1.5.tar.gz && \
     cd dtcmp-1.1.5; \
     ./configure --with-lwgrp=/usr/local; \
     make -j"$(nproc)"; \
@@ -76,7 +80,7 @@ RUN set -eux; \
     test -x /usr/local/bin/dsync
 
 # Runtime minimal image with built artifacts.
-FROM debian:latest-slim AS runtime
+FROM debian:bookworm-slim AS runtime
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -88,6 +92,7 @@ RUN apt-get update && \
       libattr1 \
       libbz2-1.0 \
       libcap2 \
+      libxxhash0 \
       openmpi-bin && \
     rm -rf /var/lib/apt/lists/*
 
