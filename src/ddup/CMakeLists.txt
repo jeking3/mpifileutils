@@ -1,2 +1,6 @@
-MFU_ADD_TOOL(ddup)
-TARGET_LINK_LIBRARIES(ddup xxhash)
+find_package(PkgConfig REQUIRED)
+IF(PkgConfig_FOUND)
+    MFU_ADD_TOOL(ddup)
+    pkg_check_modules(XXHASH REQUIRED IMPORTED_TARGET libxxhash)
+    target_link_libraries(ddup PRIVATE PkgConfig::XXHASH)
+ENDIF()

@@ -409,6 +409,7 @@ int main(int argc, char** argv)
              * Use XXH3 digest as key.
              */
             XXH64_hash_t result = XXH3_64bits_digest(state_ptr);
+            memcpy(ptr + 1, &result, sizeof(result));
 
             /* move on to next file in the list */
             ptr += DDUP_KEY_SIZE + 1;
@@ -458,7 +459,7 @@ int main(int argc, char** argv)
                 XXH64_hash_t digest = XXH3_64bits_digest(state_ptr);
                 XXH64_canonical_t digest_canon;
                 XXH64_canonicalFromHash(&digest_canon, digest);
-                char digest_string[XXH3_DIGEST_LENGTH];
+                char digest_string[XXH3_DIGEST_LENGTH * 2 + 1];
                 dump_xxh3_digest(digest_string, digest_canon.digest);
                 printf("%s %s\n", fname, digest_string);
             } else {

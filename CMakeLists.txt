@@ -147,10 +147,6 @@ IF(LibCap_FOUND)
   LIST(APPEND MFU_EXTERNAL_LIBS ${LibCap_LIBRARIES})
 ENDIF(LibCap_FOUND)
 
-## XXHASH for ddup
-set(XXHASH_BUNDLED_MODE ON)
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/xxhash/cmake_unofficial)
-
 # Setup Installation
 
 INCLUDE(GNUInstallDirs)
