@@ -98,3 +98,7 @@ install_manifest.txt
 
 # Python tests files
 __pycache__/
+
+.vs/
+
+build/
