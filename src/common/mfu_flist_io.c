@@ -843,6 +843,13 @@ static void read_cache_v3(
     mfu_flist_usrgrp_create_map(&flist->users, flist->user_id2name);
     mfu_flist_usrgrp_create_map(&flist->groups, flist->group_id2name);
 
+    if (flist->users.count > 0) {
+        flist->have_users = 1;
+    }
+    if (flist->groups.count > 0) {
+        flist->have_groups = 1;
+    }
+
     *outdisp = disp;
     return;
 }
@@ -1096,6 +1103,13 @@ static void read_cache_stat(
     /* create maps of users and groups */
     mfu_flist_usrgrp_create_map(&flist->users, flist->user_id2name);
     mfu_flist_usrgrp_create_map(&flist->groups, flist->group_id2name);
+
+    if (flist->users.count > 0) {
+        flist->have_users = 1;
+    }
+    if (flist->groups.count > 0) {
+        flist->have_groups = 1;
+    }
 
     *outdisp = disp;
     return;
