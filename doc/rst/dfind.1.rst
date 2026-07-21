@@ -39,6 +39,12 @@ OPTIONS
    Must be used with the --text option. Percent-encode ASCII control
    characters in file names so that each entry stays on one line.
 
+.. option:: --no-usrgrp
+
+   Skip resolution of uid and gid to user and group names, reporting the
+   numeric id in place of the name. Cannot be used with --user or --group,
+   which match on the resolved name.
+
 .. option:: -v, --verbose
 
    Run in verbose mode.

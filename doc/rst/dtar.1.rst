@@ -148,6 +148,11 @@ OPTIONS
    Units like "MB" and "GB" may immediately follow the number
    without spaces (eg. 8MB). The default is 256MB.
 
+.. option:: -N, --no-usrgrp
+
+   Skip resolution of uid and gid to user and group names. The archive
+   records the numeric id in the uname and gname fields.
+
 .. option:: --progress N
 
    Print progress message to stdout approximately every N seconds.

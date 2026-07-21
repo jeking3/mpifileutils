@@ -269,6 +269,13 @@ void mfu_flist_usrgrp_get_users(flist_t* flist)
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+    if (mfu_debug_level >= MFU_LOG_VERBOSE && mfu_rank == 0) {
+        MFU_LOG(MFU_LOG_INFO, "Caching users");
+    }
+
+    /* start timer to measure caching rate */
+    double start_cache = MPI_Wtime();
+
     /* rank 0 iterates over users with getpwent */
     strid_t* head = NULL;
     strid_t* tail = NULL;
@@ -357,6 +364,18 @@ retry:
     mfu_flist_usrgrp_create_map(items, flist->user_id2name);
     flist->have_users = 1;
 
+    /* report number of users cached, time, and rate */
+    if (mfu_debug_level >= MFU_LOG_VERBOSE && mfu_rank == 0) {
+        double time_diff = MPI_Wtime() - start_cache;
+        double rate = 0.0;
+        if (time_diff > 0.0) {
+            rate = ((double)items->count) / time_diff;
+        }
+        MFU_LOG(MFU_LOG_INFO, "Cached %llu users in %.3lf seconds (%.3lf users/sec)",
+                (unsigned long long)items->count, time_diff, rate
+               );
+    }
+
     return;
 }
 
@@ -373,7 +392,14 @@ void mfu_flist_usrgrp_get_groups(flist_t* flist)
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    /* rank 0 iterates over users with getpwent */
+    if (mfu_debug_level >= MFU_LOG_VERBOSE && mfu_rank == 0) {
+        MFU_LOG(MFU_LOG_INFO, "Caching groups");
+    }
+
+    /* start timer to measure caching rate */
+    double start_cache = MPI_Wtime();
+
+    /* rank 0 iterates over groups with getgrent */
     strid_t* head = NULL;
     strid_t* tail = NULL;
     int count = 0;
@@ -454,9 +480,21 @@ retry:
         strid_delete(&head, &tail, &count);
     }
 
-    /* create map of user id to user name */
+    /* create map of group id to group name */
     mfu_flist_usrgrp_create_map(items, flist->group_id2name);
     flist->have_groups = 1;
+
+    /* report number of groups cached, time, and rate */
+    if (mfu_debug_level >= MFU_LOG_VERBOSE && mfu_rank == 0) {
+        double time_diff = MPI_Wtime() - start_cache;
+        double rate = 0.0;
+        if (time_diff > 0.0) {
+            rate = ((double)items->count) / time_diff;
+        }
+        MFU_LOG(MFU_LOG_INFO, "Cached %llu groups in %.3lf seconds (%.3lf groups/sec)",
+                (unsigned long long)items->count, time_diff, rate
+               );
+    }
 
     return;
 }
@@ -471,6 +509,7 @@ void mfu_flist_usrgrp_init(flist_t* flist)
     /* allocate memory for maps */
     flist->have_users  = 0;
     flist->have_groups = 0;
+    flist->skip_usrgrp = 0;
     flist->user_id2name  = strmap_new();
     flist->group_id2name = strmap_new();
 
@@ -496,8 +535,9 @@ void mfu_flist_usrgrp_copy(flist_t* srclist, flist_t* flist)
     buft_copy(&srclist->groups, &flist->groups);
     strmap_merge(flist->user_id2name, srclist->user_id2name);
     strmap_merge(flist->group_id2name, srclist->group_id2name);
-    flist->have_users  = 1;
-    flist->have_groups = 1;
+    flist->skip_usrgrp = srclist->skip_usrgrp;
+    flist->have_users  = srclist->have_users;
+    flist->have_groups = srclist->have_groups;
 
     return; 
 }

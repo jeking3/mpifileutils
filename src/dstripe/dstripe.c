@@ -394,6 +394,10 @@ int main(int argc, char* argv[])
     /* pointer to mfu_walk_opts */
     mfu_walk_opts_t* walk_opts = mfu_walk_opts_new();
 
+    /* dstripe never resolves uid/gid to user/group names, so skip building
+     * the name cache to avoid the getpwent/getgrent scan and broadcast */
+    walk_opts->skip_usrgrp = 1;
+
     uint64_t idx;
     int option_index = 0;
     int usage = 0;

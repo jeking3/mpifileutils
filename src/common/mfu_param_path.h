@@ -114,6 +114,7 @@ typedef struct {
     int use_stat;       /* flag option on whether or not to stat files during walk */
     int dereference;    /* flag option to dereference symbolic links */
     int no_atime;       /* flag option to not update the file last acess time */
+    int skip_usrgrp;   /* flag option to skip uid/gid to name resolution */
 } mfu_walk_opts_t;
 
 typedef enum {

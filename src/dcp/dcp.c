@@ -138,6 +138,10 @@ int main(int argc, char** argv)
     /* pointer to mfu_walk opts */
     mfu_walk_opts_t* walk_opts = mfu_walk_opts_new();
 
+    /* dcp never resolves uid/gid to user/group names, so skip building
+     * the name cache to avoid the getpwent/getgrent scan and broadcast */
+    walk_opts->skip_usrgrp = 1;
+
     /* By default, show info log messages. */
     /* we back off a level on CIRCLE verbosity since its INFO is verbose */
     CIRCLE_loglevel CIRCLE_debug = CIRCLE_LOG_WARN;
@@ -534,6 +538,10 @@ int main(int argc, char** argv)
             /* otherwise, read list of files from input, but then stat each one */
             mfu_flist input_flist = mfu_flist_new();
             mfu_flist_read_cache(inputname, input_flist);
+
+            /* dcp never uses the resolved names, and mfu_flist_stat copies
+             * this flag onto the list it fills in */
+            mfu_flist_set_skip_usrgrp(input_flist, 1);
 
             skip_args.numpaths = numpaths_src;
             skip_args.paths = paths;

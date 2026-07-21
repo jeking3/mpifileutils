@@ -322,7 +322,8 @@ static void print_usage(void)
     printf("  -f, --file_histogram, --file-histogram\n");
     printf("                          - print default size distribution of items\n");
     printf("  -p, --print             - print files to screen\n");
-    printf("      --no-atime          - use with -l; do not update the file last access time\n");
+    printf("  -n, --no-atime          - use with -l; do not update the file last access time\n");
+    printf("  -N, --no-usrgrp         - skip uid/gid to user/group name resolution\n");
     printf("  -L, --dereference       - follow symbolic links\n");
     printf("      --progress <N>      - print progress every N seconds\n");
     printf("  -v, --verbose           - verbose output\n");
@@ -363,6 +364,9 @@ int main(int argc, char** argv)
      *   - allow user to load cached scan as input
      *
      *   - allow user to filter by user, group, or filename using keyword or regex
+     *     - filtering by user name or group name would not be compatible with --no-usrgrp
+     *   - allow user to filter by file type (regular, dir, link, etc.)
+     *   - allow user to filter by file permissions
      *   - allow user to specify time window
      *   - allow user to specify file sizes
      *
@@ -399,6 +403,7 @@ int main(int argc, char** argv)
         {"file-histogram", 0, 0, 'f'},
         {"print",          0, 0, 'p'},
         {"no-atime",       0, 0, 'n'},
+        {"no-usrgrp",      0, 0, 'N'},
         {"dereference",    0, 0, 'L'},
         {"progress",       1, 0, 'R'},
         {"verbose",        0, 0, 'v'},
@@ -410,7 +415,7 @@ int main(int argc, char** argv)
     int usage = 0;
     while (1) {
         int c = getopt_long(
-                    argc, argv, "i:o:tEZls:d:fpLvqhn",
+                    argc, argv, "i:o:tEZls:d:fpnNLvqh",
                     long_options, &option_index
                 );
 
@@ -447,6 +452,9 @@ int main(int argc, char** argv)
                 break;
             case 'n':
                 walk_opts->no_atime = 1;
+                break;
+            case 'N':
+                walk_opts->skip_usrgrp = 1;
                 break;
             case 'L':
                 walk_opts->dereference = 1;

@@ -53,6 +53,7 @@ static void print_usage(void)
     printf("      --dryrun           - print out list of files that would be deleted\n");
     printf("      --aggressive       - aggressive mode deletes files during the walk. You CANNOT use dryrun with this option. \n");
     printf("  -T, --traceless        - remove child items without changing parent directory mtime\n");
+    printf("  -N, --no-usrgrp        - skip uid/gid to user/group name resolution\n");
     printf("      --progress <N>     - print progress every N seconds\n");
     printf("  -v, --verbose          - verbose output\n");
     printf("  -q, --quiet            - quiet output\n");
@@ -122,6 +123,7 @@ int main(int argc, char** argv)
         {"dryrun",      0, 0, 'd'},
         {"aggressive",  0, 0, 'A'},
         {"traceless",   0, 0, 'T'},
+        {"no-usrgrp",   0, 0, 'N'},
         {"progress",    1, 0, 'R'},
         {"verbose",     0, 0, 'v'},
         {"quiet",       0, 0, 'q'},
@@ -132,7 +134,7 @@ int main(int argc, char** argv)
     int usage = 0;
     while (1) {
         int c = getopt_long(
-                    argc, argv, "i:o:tElTvqh",
+                    argc, argv, "i:o:tElTNvqh",
                     long_options, &option_index
                 );
 
@@ -188,6 +190,9 @@ int main(int argc, char** argv)
                 break;
             case 'T':
                 traceless = 1;
+                break;
+            case 'N':
+                walk_opts->skip_usrgrp = 1;
                 break;
             case 'R':
                 mfu_progress_timeout = atoi(optarg);

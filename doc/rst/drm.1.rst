@@ -87,6 +87,11 @@ OPTIONS
 
    Delete child items without updating the mtime on their parent directory.
 
+.. option:: -N, --no-usrgrp
+
+   Skip resolution of uid and gid to user and group names, reporting the
+   numeric id in place of the name.
+
 .. option:: --progress N
 
    Print progress message to stdout approximately every N seconds.

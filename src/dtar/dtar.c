@@ -149,6 +149,8 @@ static void print_usage(void)
     printf("  -b, --bufsize <SIZE>    - IO buffer size in bytes (default " MFU_BUFFER_SIZE_STR ")\n");
     printf("  -k, --chunksize <SIZE>  - work size per task in bytes (default " MFU_CHUNK_SIZE_STR ")\n");
     printf("      --memsize <SIZE>    - memory limit per task for parallel read in bytes (default 256MB)\n");
+    printf("  -N, --no-usrgrp         - skip uid/gid to user/group name resolution;\n");
+    printf("                            archive records numeric ids in the uname/gname fields\n");
     printf("      --progress <N>      - print progress every N seconds\n");
 //    printf("  -v, --verbose           - verbose output\n");
     printf("  -q, --quiet             - quiet output\n");
@@ -205,6 +207,7 @@ int main(int argc, char** argv)
         {"bufsize",   1, 0, 'b'},
         {"chunksize", 1, 0, 'k'},
         {"memsize",   1, 0, 'm'},
+        {"no-usrgrp", 0, 0, 'N'},
         {"progress",  1, 0, 'R'},
         {"verbose",   0, 0, 'v'},
         {"quiet",     0, 0, 'q'},
@@ -217,7 +220,7 @@ int main(int argc, char** argv)
     int usage = 0;
     while (1) {
         int c = getopt_long(
-                    argc, argv, "cxf:C:pb:k:vqh",
+                    argc, argv, "cxf:C:pb:k:Nvqh",
                     long_options, &option_index
                 );
 
@@ -301,6 +304,9 @@ int main(int argc, char** argv)
                 } else {
                     archive_opts->mem_size = (size_t) bytes;
                 }
+                break;
+            case 'N':
+                walk_opts->skip_usrgrp = 1;
                 break;
             case 'R':
                 mfu_progress_timeout = atoi(optarg);

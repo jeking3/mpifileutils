@@ -86,6 +86,11 @@ OPTIONS
 
    Must be used with --lite option. Do not update last file access time.
 
+.. option:: -N, --no-usrgrp
+
+   Skip resolution of uid and gid to user and group names, reporting the
+   numeric id in place of the name.
+
 .. option:: -L, --dereference
 
    Dereference symbolic links and walk the target file or directory

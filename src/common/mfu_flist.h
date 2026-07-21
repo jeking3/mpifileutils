@@ -373,6 +373,11 @@ int mfu_flist_have_detail(mfu_flist flist);
 /* set flist deatils flag */
 void mfu_flist_set_detail(mfu_flist flist, int detail);
 
+/* set flag to skip uid/gid to user/group name resolution on this list,
+ * lists created by mfu_flist_new do not inherit this from anywhere, so
+ * callers that stat into a fresh list must set it explicitly */
+void mfu_flist_set_skip_usrgrp(mfu_flist flist, int skip);
+
 /* given a mode_t from stat, return the corresponding MFU filetype */
 mfu_filetype mfu_flist_mode_to_filetype(mode_t mode);
 

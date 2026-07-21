@@ -72,6 +72,10 @@ int main (int argc, char* argv[])
     /* pointer to mfu_walk_opts */
     mfu_walk_opts_t* walk_opts = mfu_walk_opts_new();
 
+    /* dreln never resolves uid/gid to user/group names, so skip building
+     * the name cache to avoid the getpwent/getgrent scan and broadcast */
+    walk_opts->skip_usrgrp = 1;
+
     /* whether path to target should be relative from symlink */
     char* inputname = NULL;
 
