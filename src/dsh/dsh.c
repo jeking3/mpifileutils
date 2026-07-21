@@ -1609,6 +1609,7 @@ static void print_usage(void)
     printf("  -t, --text          - use with -o; write processed list to file in ascii format\n");
     printf("  -E, --urlencode     - use with -t; percent-encode ASCII control characters in filenames\n");
     printf("  -l, --lite          - walk file system without stat\n");
+    printf("  -N, --no-usrgrp     - skip uid/gid to user/group name resolution\n");
     printf("  -v, --verbose       - verbose output\n");
     printf("  -h, --help          - print usage\n");
     printf("\n");
@@ -1660,6 +1661,7 @@ int main(int argc, char** argv)
         {"input",     1, 0, 'i'},
         {"output",    1, 0, 'o'},
         {"lite",      0, 0, 'l'},
+        {"no-usrgrp", 0, 0, 'N'},
         {"help",      0, 0, 'h'},
         {"verbose",   0, 0, 'v'},
         {"text",      0, 0, 't'},
@@ -1670,7 +1672,7 @@ int main(int argc, char** argv)
     int usage = 0;
     while (1) {
         int c = getopt_long(
-                    argc, argv, "f:i:o:lhvtE",
+                    argc, argv, "f:i:o:lNhvtE",
                     long_options, &option_index
                 );
 
@@ -1692,6 +1694,9 @@ int main(int argc, char** argv)
                 break;
             case 'l':
                 walk_opts->use_stat = 0;
+                break;
+            case 'N':
+                walk_opts->skip_usrgrp = 1;
                 break;
             case 'h':
                 usage = 1;

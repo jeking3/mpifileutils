@@ -3037,6 +3037,11 @@ int main(int argc, char **argv)
     /* pointer to mfu_walk_opts */
     mfu_walk_opts_t* walk_opts = mfu_walk_opts_new();
 
+    /* dsync compares ownership by numeric uid/gid and never resolves them to
+     * user/group names, so skip building the name cache to avoid the
+     * getpwent/getgrent scan and broadcast */
+    walk_opts->skip_usrgrp = 1;
+
     /* pointer to mfu_copy opts */
     mfu_copy_opts_t* copy_opts = mfu_copy_opts_new();
 

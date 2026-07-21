@@ -596,6 +596,9 @@ int mfu_flist_walk_paths(uint64_t num_paths, const char** paths,
     /* convert handle to flist_t */
     flist_t* flist = (flist_t*) bflist;
 
+    /* propagate walk option onto flist so other code paths can see it */
+    flist->skip_usrgrp = walk_opts->skip_usrgrp;
+
     /* get our rank and number of ranks in job */
     int rank, ranks;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -629,11 +632,13 @@ int mfu_flist_walk_paths(uint64_t num_paths, const char** paths,
     flist->detail = 0;
     if (walk_opts->use_stat) {
         flist->detail = 1;
-        if (flist->have_users == 0) {
-            mfu_flist_usrgrp_get_users(flist);
-        }
-        if (flist->have_groups == 0) {
-            mfu_flist_usrgrp_get_groups(flist);
+        if (!walk_opts->skip_usrgrp) {
+            if (flist->have_users == 0) {
+                mfu_flist_usrgrp_get_users(flist);
+            }
+            if (flist->have_groups == 0) {
+                mfu_flist_usrgrp_get_groups(flist);
+            }
         }
     }
 
@@ -743,18 +748,23 @@ void mfu_flist_stat(
   mfu_file_t* mfu_file)
 {
     flist_t* file_list = (flist_t*)flist;
+    flist_t* in_list   = (flist_t*)input_flist;
 
     /* we will stat all items in output list, so set detail to 1 */
     file_list->detail = 1;
 
-    /* get user data if needed */
-    if (file_list->have_users == 0) {
-        mfu_flist_usrgrp_get_users(flist);
-    }
+    /* the output list is often freshly created, so carry the caller's
+     * choice about name resolution over from the input list */
+    file_list->skip_usrgrp = in_list->skip_usrgrp;
 
-    /* get groups data if needed */
-    if (file_list->have_groups == 0) {
-        mfu_flist_usrgrp_get_groups(flist);
+    /* get user and group data if needed */
+    if (!file_list->skip_usrgrp) {
+        if (file_list->have_users == 0) {
+            mfu_flist_usrgrp_get_users(flist);
+        }
+        if (file_list->have_groups == 0) {
+            mfu_flist_usrgrp_get_groups(flist);
+        }
     }
 
     /* step through each item in input list and stat it */

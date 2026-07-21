@@ -70,6 +70,9 @@ mfu_walk_opts_t* mfu_walk_opts_new(void)
     /* Don't update the file last access time */
     opts->no_atime = 0;
 
+    /* Resolve uid/gid to names by default */
+    opts->skip_usrgrp = 0;
+
     return opts;
 }
 
@@ -771,6 +774,13 @@ void mfu_flist_set_detail (mfu_flist bflist, int detail)
 
     /* TODO: free resources if detail == 0 ? */
 
+    return;
+}
+
+void mfu_flist_set_skip_usrgrp(mfu_flist bflist, int skip)
+{
+    flist_t* flist = (flist_t*) bflist;
+    flist->skip_usrgrp = skip;
     return;
 }
 

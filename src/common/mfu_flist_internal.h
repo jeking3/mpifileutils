@@ -81,6 +81,7 @@ typedef struct flist {
     buf_t groups;
     int have_users;        /* set to 1 if user map is valid */
     int have_groups;       /* set to 1 if group map is valid */
+    int skip_usrgrp;       /* set to 1 to skip uid/gid to name resolution */
     strmap* user_id2name;  /* map linux uid to user name */
     strmap* group_id2name; /* map linux gid to group name */
 } flist_t;

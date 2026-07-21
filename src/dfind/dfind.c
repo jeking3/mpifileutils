@@ -20,6 +20,10 @@
 #include "mfu_daos.h"
 #endif
 
+/* long-only option value, chosen above the range of single char options
+ * since -N is already taken by --newer */
+#define DFIND_OPT_NO_USRGRP 1000
+
 int MFU_PRED_EXEC  (mfu_flist flist, uint64_t idx, void* arg);
 int MFU_PRED_PRINT (mfu_flist flist, uint64_t idx, void* arg);
 
@@ -161,6 +165,8 @@ static void print_usage(void)
     printf("  -o, --output <file>     - write processed list to file\n");
     printf("  -t, --text              - use with -o; write processed list to file in ascii format\n");
     printf("  -E, --urlencode         - use with -t; percent-encode ASCII control characters in filenames\n");
+    printf("      --no-usrgrp         - skip uid/gid to user/group name resolution;\n");
+    printf("                            cannot be used with --user or --group\n");
     printf("  -v, --verbose           - verbose output\n");
     printf("  -q, --quiet             - quiet output\n");
     printf("  -h, --help              - print usage\n");
@@ -313,6 +319,10 @@ int main (int argc, char** argv)
     int urlencode = 0;
     int rc = 0;
 
+    /* set if a test needs user/group names resolved,
+     * which is incompatible with --no-usrgrp */
+    int need_usrgrp = 0;
+
 #ifdef DAOS_SUPPORT
     /* DAOS vars */
     daos_args_t* daos_args = daos_args_new();
@@ -323,6 +333,7 @@ int main (int argc, char** argv)
         {"output",      1, 0, 'o'},
         {"text",        0, 0, 't'},
         {"urlencode",   0, 0, 'E'},
+        {"no-usrgrp",   0, 0, DFIND_OPT_NO_USRGRP},
         {"verbose",     0, 0, 'v'},
         {"quiet",       0, 0, 'q'},
         {"help",        0, 0, 'h'},
@@ -435,6 +446,7 @@ int main (int argc, char** argv)
     	case 'G':
     	    buf = MFU_STRDUP(optarg);
     	    mfu_pred_add(pred_head, MFU_PRED_GROUP, (void *)buf);
+    	    need_usrgrp = 1;
     	    break;
 
     	case 'u':
@@ -446,6 +458,7 @@ int main (int argc, char** argv)
     	case 'U':
     	    buf = MFU_STRDUP(optarg);
     	    mfu_pred_add(pred_head, MFU_PRED_USER, (void *)buf);
+    	    need_usrgrp = 1;
     	    break;
 
     	case 's':
@@ -550,6 +563,9 @@ int main (int argc, char** argv)
         case 'E':
             urlencode = 1;
             break;
+        case DFIND_OPT_NO_USRGRP:
+            walk_opts->skip_usrgrp = 1;
+            break;
         case 'v':
             mfu_debug_level = MFU_LOG_VERBOSE;
             break;
@@ -567,6 +583,17 @@ int main (int argc, char** argv)
                 printf("?? getopt returned character code 0%o ??\n", c);
             }
     	}
+    }
+
+    /* --user and --group match on the resolved name, which --no-usrgrp
+     * leaves as the numeric id, so those tests would silently match
+     * nothing, reject the combination rather than return a wrong answer */
+    if (walk_opts->skip_usrgrp && need_usrgrp) {
+        if (rank == 0) {
+            MFU_LOG(MFU_LOG_ERR, "--no-usrgrp cannot be used with --user or --group, "
+                    "use --uid or --gid instead" MFU_ERRF, MFU_ERRP(-MFU_ERR_INVAL_ARG));
+        }
+        usage = 1;
     }
 
     /* print usage if we need to */

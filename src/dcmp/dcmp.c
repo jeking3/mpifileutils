@@ -47,6 +47,7 @@ static void print_usage(void)
 #endif
     printf("  -s, --direct              - open files with O_DIRECT\n");
     printf("      --open-noatime        - open files with O_NOATIME\n");
+    printf("  -N, --no-usrgrp           - skip uid/gid to user/group name resolution\n");
     printf("      --progress <N>        - print progress every N seconds\n");
     printf("  -v, --verbose             - verbose output\n");
     printf("  -q, --quiet               - quiet output\n");
@@ -2149,6 +2150,7 @@ int main(int argc, char **argv)
         {"daos-api",      1, 0, 'x'},
         {"direct",        0, 0, 's'},
         {"open-noatime",  0, 0, 'U'},
+        {"no-usrgrp",     0, 0, 'N'},
         {"progress",      1, 0, 'R'},
         {"verbose",       0, 0, 'v'},
         {"quiet",         0, 0, 'q'},
@@ -2167,7 +2169,7 @@ int main(int argc, char **argv)
     unsigned long long bytes = 0;
     while (1) {
         int c = getopt_long(
-            argc, argv, "o:tEbsvqldh",
+            argc, argv, "o:tEbsNvqldh",
             long_options, &option_index
         );
 
@@ -2224,6 +2226,9 @@ int main(int argc, char **argv)
             if(rank == 0) {
                 MFU_LOG(MFU_LOG_INFO, "Using O_NOATIME");
             }
+            break;
+        case 'N':
+            walk_opts->skip_usrgrp = 1;
             break;
         case 'R':
             mfu_progress_timeout = atoi(optarg);
