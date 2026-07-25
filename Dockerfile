@@ -46,9 +46,8 @@ WORKDIR /usr/local/src
     # cd libcircle-0.3.0; \
 
 RUN set -eux; \
-    git clone -b backtrace-on-mpi-error https://github.com/jeking3/libcircle.git; \
+    git clone -b storage-reports-patches https://github.com/jeking3/libcircle.git; \
     cd libcircle; \
-    git checkout 59a194aeaa67868f0159be38547668e2e92b0775; \
     autoreconf -i; \
     ./configure; \
     make -j"$(nproc)"; \

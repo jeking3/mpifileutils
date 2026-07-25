@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <time.h> /* asctime / localtime */
+#include <inttypes.h>
 #include <regex.h>
 
 /* These headers are needed to query the Lustre MDS for stat
@@ -54,6 +55,14 @@ static int DEREFERENCE;
 static int WALK_RESULT = 0;
 static int NO_ATIME;
 static mfu_file_t** CURRENT_PFILE;
+
+/* walk instrumentation: when CIRCLE_INSTRUMENT is set to a positive interval
+ * (same toggle libcircle uses), log the fan-out of any directory whose child
+ * count reaches WALK_INSTR_FANOUT_MIN, so we can see the tree shape that
+ * libcircle's per-rank counters cannot (it has no notion of directories) */
+static int      WALK_INSTR = 0;
+static uint64_t WALK_INSTR_FANOUT_MIN = 1000;
+static char     WALK_INSTR_HOST[256] = "";  /* node this rank landed on */
 
 /****************************************
  * Global counter and callbacks for LIBCIRCLE reductions
@@ -459,6 +468,7 @@ static void walk_stat_process_dir(char* dir, CIRCLE_handle* handle)
         WALK_RESULT = -1;
     }
     else {
+        uint64_t fanout = 0;
         while (1) {
             /* read next directory entry */
             struct dirent* entry = mfu_file_readdir(dirp, mfu_file);
@@ -475,8 +485,22 @@ static void walk_stat_process_dir(char* dir, CIRCLE_handle* handle)
                 if (rc == 0) {
                     /* add item to queue */
                     handle->enqueue(newpath);
+                    fanout++;
                 }
             }
+        }
+
+        /* instrumentation: record large directories (which one rank must read
+         * in a single, uninterruptible callback before any child can be
+         * stolen) so we can correlate them with work-distribution stalls */
+        if (WALK_INSTR && fanout >= WALK_INSTR_FANOUT_MIN) {
+            char ts[32];
+            time_t lt = time(NULL);
+            strftime(ts, sizeof(ts), "%Y-%m-%dT%H:%M:%S", localtime(&lt));
+            fprintf(mfu_debug_stream,
+                    "[%s] [WALKINSTR] rank=%d host=%s fanout=%" PRIu64 " dir=%s\n",
+                    ts, mfu_rank, WALK_INSTR_HOST, fanout, dir);
+            fflush(mfu_debug_stream);
         }
     }
     mfu_file_closedir(dirp, mfu_file);
@@ -568,6 +592,19 @@ int mfu_flist_walk_paths(uint64_t num_paths, const char** paths,
 {
     /* report walk count, time, and rate */
     double start_walk = MPI_Wtime();
+
+    /* enable fan-out instrumentation when CIRCLE_INSTRUMENT sets an interval
+     * (the same single toggle that drives libcircle's instrumentation) */
+    {
+        const char* envstr = getenv("CIRCLE_INSTRUMENT");
+        WALK_INSTR = (envstr != NULL && atoi(envstr) > 0) ? 1 : 0;
+        if (WALK_INSTR) {
+            if (gethostname(WALK_INSTR_HOST, sizeof(WALK_INSTR_HOST)) != 0) {
+                WALK_INSTR_HOST[0] = '\0';
+            }
+            WALK_INSTR_HOST[sizeof(WALK_INSTR_HOST) - 1] = '\0';
+        }
+    }
 
     /* if dir_permission is set to 1 then set global variable */
     SET_DIR_PERMS = 0;
