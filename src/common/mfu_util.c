@@ -493,10 +493,10 @@ void mfu_format_mode(mode_t mode, char* buf)
     }
 
     if (S_IXUSR & mode) {
-        buf[3] = 'x';
+        buf[3] = (S_ISUID & mode) ? 's' : 'x';
     }
     else {
-        buf[3] = '-';
+        buf[3] = (S_ISUID & mode) ? 'S' : '-';
     }
 
     if (S_IRGRP & mode) {
@@ -514,10 +514,10 @@ void mfu_format_mode(mode_t mode, char* buf)
     }
 
     if (S_IXGRP & mode) {
-        buf[6] = 'x';
+        buf[6] = (S_ISGID & mode) ? 's' : 'x';
     }
     else {
-        buf[6] = '-';
+        buf[6] = (S_ISGID & mode) ? 'S' : '-';
     }
 
     if (S_IROTH & mode) {
@@ -535,10 +535,10 @@ void mfu_format_mode(mode_t mode, char* buf)
     }
 
     if (S_IXOTH & mode) {
-        buf[9] = 'x';
+        buf[9] = (S_ISVTX & mode) ? 't' : 'x';
     }
     else {
-        buf[9] = '-';
+        buf[9] = (S_ISVTX & mode) ? 'T' : '-';
     }
 
     buf[10] = '\0';
