@@ -124,7 +124,14 @@ static int build_path(char* path, size_t path_len, const char* dir, const char* 
     } else {
         new_len = snprintf(path, path_len, "%s/%s", dir, name);
     }
-    if (new_len > path_len) {
+    /* snprintf returns the length it would have written, excluding the null
+     * terminator, and writes at most path_len-1 chars.  Truncation therefore
+     * begins at new_len == path_len, not path_len+1.  Letting that one value
+     * through silently drops the last character: when it lands on the '/'
+     * separator the result is the parent directory with a trailing slash,
+     * which build_path then regenerates byte-for-byte on every subsequent
+     * call, walking the same directory forever. */
+    if (new_len < 0 || (size_t) new_len >= path_len) {
         MFU_LOG(MFU_LOG_ERR, "Path name is too long, %d chars exceeds limit %zu: '%s/%s'",
                 new_len, path_len, dir, name);
         WALK_RESULT = -1;
