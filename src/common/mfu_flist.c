@@ -347,6 +347,11 @@ static void list_insert_copy(flist_t* flist, elem_t* src)
     elem->ctime_nsec = src->ctime_nsec;
     elem->size       = src->size;
 
+#ifdef DAOS_SUPPORT
+    elem->obj_id_lo  = src->obj_id_lo;
+    elem->obj_id_hi  = src->obj_id_hi;
+#endif
+
     /* append element to tail of linked list */
     mfu_flist_insert_elem(flist, elem);
 
@@ -773,6 +778,7 @@ void mfu_flist_set_detail (mfu_flist bflist, int detail)
     return;
 }
 
+#ifdef DAOS_SUPPORT
 uint64_t mfu_flist_file_get_oid_low(mfu_flist bflist, uint64_t idx)
 {
     uint64_t oid_low;
@@ -794,6 +800,7 @@ uint64_t mfu_flist_file_get_oid_high(mfu_flist bflist, uint64_t idx)
     }
     return oid_high;
 }
+#endif
 
 const char* mfu_flist_file_get_name(mfu_flist bflist, uint64_t idx)
 {

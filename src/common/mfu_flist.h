@@ -379,8 +379,10 @@ mfu_filetype mfu_flist_mode_to_filetype(mode_t mode);
 
 /* read properties on specified item in local flist */
 /* always set */
+#ifdef DAOS_SUPPORT
 uint64_t mfu_flist_file_get_oid_low(mfu_flist flist, uint64_t index);
 uint64_t mfu_flist_file_get_oid_high(mfu_flist flist, uint64_t index);
+#endif
 const char* mfu_flist_file_get_name(mfu_flist flist, uint64_t index);
 int mfu_flist_file_get_depth(mfu_flist flist, uint64_t index);
 mfu_filetype mfu_flist_file_get_type(mfu_flist flist, uint64_t index);

@@ -41,9 +41,11 @@ typedef struct list_elem {
     uint64_t ctime_nsec;    /* create time nanoseconds */
     uint64_t size;          /* file size in bytes */
     struct list_elem* next; /* pointer to next item */
+#ifdef DAOS_SUPPORT
     /* vars for a non-posix DAOS copy */
     uint64_t obj_id_lo;
     uint64_t obj_id_hi;
+#endif
 } elem_t;
 
 /* holds an array of objects: users, groups, or file data */
