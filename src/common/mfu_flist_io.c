@@ -35,7 +35,8 @@ static char mpierrstr[MPI_MAX_ERROR_STRING];
 #define CACHE_VER_V3     3  /* version 3: basic stat format */
 #define CACHE_VER_V4     4  /* version 4: stat format with improved layout */
 #define CACHE_VER_V5     5  /* version 5: stat format with inode support */
-#define CACHE_VER_CURRENT CACHE_VER_V5  /* current version for writing */
+#define CACHE_VER_V6     6  /* version 6: stat format with allocated blocks */
+#define CACHE_VER_CURRENT CACHE_VER_V6  /* current version for writing */
 
 /* we try to use external32 when supported, since this format is standard
  * across MPI libraries, we'll fall back to native */
@@ -237,8 +238,14 @@ static size_t list_elem_pack_size(int detail, uint64_t chars, const elem_t* elem
 {
     size_t size;
     if (detail) {
-        /* v5 and later include inode (11 fields), v4 and earlier have 10 fields */
-        int num_fields = (version >= CACHE_VER_V5) ? 11 : 10;
+        /* v4 and earlier have 10 fields, each later version appends one */
+        int num_fields = 10;
+        if (version >= CACHE_VER_V5) {
+            num_fields++;   /* inode */
+        }
+        if (version >= CACHE_VER_V6) {
+            num_fields++;   /* allocated blocks */
+        }
         size = chars + 0 * 4 + num_fields * 8;
     }
     else {
@@ -273,6 +280,10 @@ static size_t list_elem_pack(void* buf, int detail, uint64_t chars, const elem_t
         /* v5 and later include inode */
         if (version >= CACHE_VER_V5) {
             mfu_pack_io_uint64(&ptr, elem->ino);
+        }
+        /* v6 and later include allocated blocks */
+        if (version >= CACHE_VER_V6) {
+            mfu_pack_io_uint64(&ptr, elem->blocks);
         }
     }
     else {
@@ -319,6 +330,12 @@ static size_t list_elem_unpack(const void* buf, int detail, uint64_t chars, elem
             mfu_unpack_io_uint64(&ptr, &elem->ino);
         } else {
             elem->ino = 0;
+        }
+        /* v6 and later include allocated blocks */
+        if (version >= CACHE_VER_V6) {
+            mfu_unpack_io_uint64(&ptr, &elem->blocks);
+        } else {
+            elem->blocks = 0;
         }
 
         /* use mode to set file type */
@@ -1693,7 +1710,7 @@ static size_t print_file_text(mfu_flist flist, uint64_t idx, char* buffer, size_
         uint64_t acc = mfu_flist_file_get_atime(flist, idx);
         uint64_t mod = mfu_flist_file_get_mtime(flist, idx);
         uint64_t cre = mfu_flist_file_get_ctime(flist, idx);
-        uint64_t size = mfu_flist_file_get_size(flist, idx);
+        uint64_t size = mfu_flist_file_get_reported_size(flist, idx);
         uint64_t ino = mfu_flist_file_get_ino(flist, idx);
         const char* username  = mfu_flist_file_get_username(flist, idx);
         const char* groupname = mfu_flist_file_get_groupname(flist, idx);

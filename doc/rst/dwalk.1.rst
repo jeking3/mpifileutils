@@ -48,6 +48,12 @@ OPTIONS
 
    Walk file system without stat.
 
+.. option:: -A, --allocated
+
+   Report allocated space (st_blocks * 512) in place of logical size.
+   Applies to the text output, the --print listing, the byte summary and
+   the --distribution and --file-histogram bins.
+
 .. option:: -Z, --lazy-stat
 
    Accept whatever file attributes the file system has cached rather than

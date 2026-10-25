@@ -54,7 +54,7 @@ static void create_default_separators(struct distribute_option *option,
     /* get local max file size for Allreduce */
     uint64_t local_max_file_size = 0;
     for (int i = 0; i < *size; i++) {
-        uint64_t file_size = mfu_flist_file_get_size(*flist, i);
+        uint64_t file_size = mfu_flist_file_get_reported_size(*flist, i);
         if (file_size > local_max_file_size) {
             local_max_file_size = file_size;
         }
@@ -118,7 +118,7 @@ static int print_flist_distribution(int file_histogram,
     /* for each file, identify appropriate bin and increment its count */
     for (int i = 0; i < size; i++) {
          /* get the size of the file */
-         uint64_t file_size = mfu_flist_file_get_size(flist, i);
+         uint64_t file_size = mfu_flist_file_get_reported_size(flist, i);
 
          /* loop through the bins and find the one the file belongs to,
           * set last bin to -1, if a bin is not found while looping through the
@@ -316,6 +316,7 @@ static void print_usage(void)
     printf("  -t, --text              - use with -o; write processed list to file in ascii format\n");
     printf("  -E, --urlencode         - use with -t; percent-encode ASCII control characters in filenames\n");
     printf("  -l, --lite              - walk file system without stat\n");
+    printf("  -A, --allocated         - report allocated space (st_blocks * 512) in place of logical size\n");
     printf("  -Z, --lazy-stat         - accept cached attributes; faster, but size and allocation may be stale\n");
     printf("  -s, --sort <fields>     - sort output by comma-delimited fields\n");
     printf("  -d, --distribution <field>:<separators> \n                          - print distribution by field\n");
@@ -383,6 +384,7 @@ int main(int argc, char** argv)
     int print                = 0;
     int text                 = 0;
     int urlencode            = 0;
+    int allocated            = 0;
 
     struct distribute_option option;
 
@@ -396,6 +398,7 @@ int main(int argc, char** argv)
         {"text",           0, 0, 't'},
         {"urlencode",      0, 0, 'E'},
         {"lite",           0, 0, 'l'},
+        {"allocated",      0, 0, 'A'},
         {"lazy-stat",      0, 0, 'Z'},
         {"sort",           1, 0, 's'},
         {"distribution",   1, 0, 'd'},
@@ -415,7 +418,7 @@ int main(int argc, char** argv)
     int usage = 0;
     while (1) {
         int c = getopt_long(
-                    argc, argv, "i:o:tEZls:d:fpnNLvqh",
+                    argc, argv, "i:o:tEAZls:d:fpnNLvqh",
                     long_options, &option_index
                 );
 
@@ -433,6 +436,10 @@ int main(int argc, char** argv)
             case 'l':
                 /* don't stat each file on the walk */
                 walk_opts->use_stat = 0;
+                break;
+            case 'A':
+                /* report allocated space in place of logical size */
+                allocated = 1;
                 break;
             case 'Z':
                 /* accept cached attributes, which may be stale */
@@ -705,6 +712,10 @@ daos_setup_done:
         mfu_free(&flist);
         flist = flist2;
     }
+
+    /* decide whether sizes are reported as allocated space or logical size,
+     * which every place below that renders a size then follows */
+    mfu_flist_set_report_allocated(flist, allocated);
 
     /* print details for individual files */
     if (print) {

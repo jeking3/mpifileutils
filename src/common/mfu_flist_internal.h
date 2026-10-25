@@ -37,9 +37,10 @@ typedef struct list_elem {
     uint64_t atime_nsec;    /* access time nanoseconds */
     uint64_t mtime;         /* modify time */
     uint64_t mtime_nsec;    /* modify time nanoseconds */
-    uint64_t ctime;         /* create time */
-    uint64_t ctime_nsec;    /* create time nanoseconds */
+    uint64_t ctime;         /* metadata change time */
+    uint64_t ctime_nsec;    /* metadata change time nanoseconds */
     uint64_t size;          /* file size in bytes */
+    uint64_t blocks;        /* allocated space in 512-byte blocks (st_blocks) */
     uint64_t ino;           /* inode number */
     struct list_elem* next; /* pointer to next item */
 #ifdef DAOS_SUPPORT
@@ -84,6 +85,7 @@ typedef struct flist {
     int have_users;        /* set to 1 if user map is valid */
     int have_groups;       /* set to 1 if group map is valid */
     int skip_usrgrp;       /* set to 1 to skip uid/gid to name resolution */
+    int report_allocated;  /* set to 1 to report allocated space in place of logical size */
     strmap* user_id2name;  /* map linux uid to user name */
     strmap* group_id2name; /* map linux gid to group name */
 } flist_t;

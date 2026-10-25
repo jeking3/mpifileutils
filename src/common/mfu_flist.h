@@ -378,6 +378,10 @@ void mfu_flist_set_detail(mfu_flist flist, int detail);
  * callers that stat into a fresh list must set it explicitly */
 void mfu_flist_set_skip_usrgrp(mfu_flist flist, int skip);
 
+/* report allocated space in place of logical size wherever this list
+ * renders a size: text output, the printed listing and the summary */
+void mfu_flist_set_report_allocated(mfu_flist flist, int allocated);
+
 /* given a mode_t from stat, return the corresponding MFU filetype */
 mfu_filetype mfu_flist_mode_to_filetype(mode_t mode);
 
@@ -407,6 +411,9 @@ uint64_t mfu_flist_file_get_ctime(mfu_flist flist, uint64_t index);
 uint64_t mfu_flist_file_get_ctime_nsec(mfu_flist flist, uint64_t index);
 uint64_t mfu_flist_file_get_size(mfu_flist flist, uint64_t index);
 uint64_t mfu_flist_file_get_ino(mfu_flist flist, uint64_t index);
+uint64_t mfu_flist_file_get_blocks(mfu_flist flist, uint64_t index);
+uint64_t mfu_flist_file_get_allocated(mfu_flist flist, uint64_t index);
+uint64_t mfu_flist_file_get_reported_size(mfu_flist flist, uint64_t index);
 uint64_t mfu_flist_file_get_perm(mfu_flist flist, uint64_t index);
 #if DCOPY_USE_XATTRS
 void *mfu_flist_file_get_acl(mfu_flist bflist, uint64_t idx, ssize_t *acl_size, char *type);
@@ -433,6 +440,7 @@ void mfu_flist_file_set_ctime(mfu_flist flist, uint64_t index, uint64_t ctime);
 void mfu_flist_file_set_ctime_nsec(mfu_flist flist, uint64_t index, uint64_t ctime_nsec);
 void mfu_flist_file_set_size(mfu_flist flist, uint64_t index, uint64_t size);
 void mfu_flist_file_set_ino(mfu_flist flist, uint64_t index, uint64_t ino);
+void mfu_flist_file_set_blocks(mfu_flist flist, uint64_t index, uint64_t blocks);
 #if DCOPY_USE_XATTRS
 //void *mfu_flist_file_set_acl(mfu_flist bflist, uint64_t idx, ssize_t *acl_size, char *type);
 #endif

@@ -3884,6 +3884,24 @@ static void insert_entry_into_flist(
 
     uint64_t ino = (uint64_t) archive_entry_ino64(entry);
     mfu_flist_file_set_ino(flist, idx, ino);
+
+    /* tar records no st_blocks, but a sparse entry carries a map of the
+     * regions that hold data, and summing those gives the space the item
+     * actually occupies. An entry with no map is not sparse, so assume it
+     * is fully allocated. Note that an archive written without sparse
+     * support records no map even for a sparse file, in which case this
+     * reports the item as fully allocated because the archive does not
+     * say otherwise. */
+    uint64_t data_bytes = size;
+    if (archive_entry_sparse_count(entry) > 0) {
+        la_int64_t offset, length;
+        data_bytes = 0;
+        archive_entry_sparse_reset(entry);
+        while (archive_entry_sparse_next(entry, &offset, &length) == ARCHIVE_OK) {
+            data_bytes += (uint64_t) length;
+        }
+    }
+    mfu_flist_file_set_blocks(flist, idx, (data_bytes + 511) / 512);
 }
 
 /* Given an archvive file, build file list of corresponding items,

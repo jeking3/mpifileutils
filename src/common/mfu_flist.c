@@ -128,7 +128,7 @@ static size_t list_elem_pack2_size(int detail, uint64_t chars, const elem_t* ele
 {
     size_t size;
     if (detail) {
-        size = 2 * 4 + chars + 0 * 4 + 11 * 8;
+        size = 2 * 4 + chars + 0 * 4 + 12 * 8;
     }
     else {
         size = 2 * 4 + chars + 1 * 4;
@@ -182,6 +182,7 @@ static size_t list_elem_pack2(void* buf, int detail, uint64_t chars, const elem_
         mfu_pack_uint64(&ptr, elem->ctime_nsec);
         mfu_pack_uint64(&ptr, elem->size);
         mfu_pack_uint64(&ptr, elem->ino);
+        mfu_pack_uint64(&ptr, elem->blocks);
     }
     else {
         /* just have the file type */
@@ -238,6 +239,7 @@ static size_t list_elem_unpack2(const void* buf, elem_t* elem)
         mfu_unpack_uint64(&ptr, &elem->ctime_nsec);
         mfu_unpack_uint64(&ptr, &elem->size);
         mfu_unpack_uint64(&ptr, &elem->ino);
+        mfu_unpack_uint64(&ptr, &elem->blocks);
         /* use mode to set file type */
         elem->type = mfu_flist_mode_to_filetype((mode_t)elem->mode);
     }
@@ -352,6 +354,7 @@ static void list_insert_copy(flist_t* flist, elem_t* src)
     elem->ctime_nsec = src->ctime_nsec;
     elem->size       = src->size;
     elem->ino        = src->ino;
+    elem->blocks     = src->blocks;
 
 #ifdef DAOS_SUPPORT
     elem->obj_id_lo  = src->obj_id_lo;
@@ -399,8 +402,9 @@ void mfu_flist_insert_stat(flist_t* flist, const char* fpath, mode_t mode, const
         elem->ctime      = secs;
         elem->ctime_nsec = nsecs;
 
-        elem->size  = (uint64_t) sb->st_size;
-        elem->ino   = (uint64_t) sb->st_ino;
+        elem->size   = (uint64_t) sb->st_size;
+        elem->ino    = (uint64_t) sb->st_ino;
+        elem->blocks = (uint64_t) sb->st_blocks;
 
         /* TODO: link to user and group names? */
     }
@@ -556,6 +560,7 @@ mfu_flist mfu_flist_new()
 
     flist->detail = 0;
     flist->total_files = 0;
+    flist->report_allocated = 0;
 
     /* initialize linked list */
     flist->list_count = 0;
@@ -792,6 +797,13 @@ void mfu_flist_set_skip_usrgrp(mfu_flist bflist, int skip)
     return;
 }
 
+void mfu_flist_set_report_allocated(mfu_flist bflist, int allocated)
+{
+    flist_t* flist = (flist_t*) bflist;
+    flist->report_allocated = allocated;
+    return;
+}
+
 #ifdef DAOS_SUPPORT
 uint64_t mfu_flist_file_get_oid_low(mfu_flist bflist, uint64_t idx)
 {
@@ -1019,6 +1031,35 @@ uint64_t mfu_flist_file_get_ino(mfu_flist bflist, uint64_t idx)
     return ret;
 }
 
+uint64_t mfu_flist_file_get_blocks(mfu_flist bflist, uint64_t idx)
+{
+    uint64_t ret = (uint64_t) 0;
+    flist_t* flist = (flist_t*) bflist;
+    elem_t* elem = list_get_elem(flist, idx);
+    if (elem != NULL && flist->detail) {
+        ret = elem->blocks;
+    }
+    return ret;
+}
+
+/* space allocated to the item in bytes, as st_blocks counts 512-byte units */
+uint64_t mfu_flist_file_get_allocated(mfu_flist bflist, uint64_t idx)
+{
+    return mfu_flist_file_get_blocks(bflist, idx) * 512;
+}
+
+/* size to report for the item, which is the allocated space when the list
+ * has been asked for it and the logical size otherwise, so that every place
+ * that renders a size agrees without each one testing the flag */
+uint64_t mfu_flist_file_get_reported_size(mfu_flist bflist, uint64_t idx)
+{
+    flist_t* flist = (flist_t*) bflist;
+    if (flist->report_allocated) {
+        return mfu_flist_file_get_allocated(bflist, idx);
+    }
+    return mfu_flist_file_get_size(bflist, idx);
+}
+
 const char* mfu_flist_file_get_username(mfu_flist bflist, uint64_t idx)
 {
     const char* ret = NULL;
@@ -1213,6 +1254,16 @@ void mfu_flist_file_set_ino(mfu_flist bflist, uint64_t idx, uint64_t ino)
     return;
 }
 
+void mfu_flist_file_set_blocks(mfu_flist bflist, uint64_t idx, uint64_t blocks)
+{
+    flist_t* flist = (flist_t*) bflist;
+    elem_t* elem = list_get_elem(flist, idx);
+    if (elem != NULL) {
+        elem->blocks = blocks;
+    }
+    return;
+}
+
 mfu_flist mfu_flist_subset(mfu_flist src)
 {
     /* allocate a new file list */
@@ -1224,6 +1275,7 @@ mfu_flist mfu_flist_subset(mfu_flist src)
 
     /* copy user and groups if we have them */
     flist->detail = srclist->detail;
+    flist->report_allocated = srclist->report_allocated;
     if (srclist->detail) {
         mfu_flist_usrgrp_copy(srclist, flist);
     }
@@ -1396,6 +1448,7 @@ uint64_t mfu_flist_file_create(mfu_flist bflist)
     elem->ctime_nsec = 0;
     elem->size       = 0;
     elem->ino        = 0;
+    elem->blocks     = 0;
 
     /* for DAOS */
 #ifdef DAOS_SUPPORT
@@ -1676,7 +1729,7 @@ static void print_file(mfu_flist flist, uint64_t idx)
         uint64_t acc = mfu_flist_file_get_atime(flist, idx);
         uint64_t mod = mfu_flist_file_get_mtime(flist, idx);
         uint64_t cre = mfu_flist_file_get_ctime(flist, idx);
-        uint64_t size = mfu_flist_file_get_size(flist, idx);
+        uint64_t size = mfu_flist_file_get_reported_size(flist, idx);
         const char* username  = mfu_flist_file_get_username(flist, idx);
         const char* groupname = mfu_flist_file_get_groupname(flist, idx);
 
@@ -1875,7 +1928,7 @@ void mfu_flist_print_summary(mfu_flist flist)
             mode_t mode = (mode_t) mfu_flist_file_get_mode(flist, idx);
 
             /* get size of item */
-            uint64_t size = mfu_flist_file_get_size(flist, idx);
+            uint64_t size = mfu_flist_file_get_reported_size(flist, idx);
 
             /* set file type */
             if (S_ISDIR(mode)) {
