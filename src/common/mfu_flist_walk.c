@@ -171,10 +171,14 @@ static void lustre_stripe_info(void* buf)
  * Walk directory tree using stat at top level and getdents system call
  ***************************************/
 
-struct linux_dirent {
-    long           d_ino;
-    off_t          d_off;
+/* Layout of a getdents64 record.  The kernel does not expose this to user
+ * space, so declare it here.  Unlike getdents, getdents64 gives the item
+ * type a field of its own rather than storing it in the record's last byte. */
+struct linux_dirent64 {
+    uint64_t       d_ino;
+    int64_t        d_off;
     unsigned short d_reclen;
+    unsigned char  d_type;
     char           d_name[];
 };
 
@@ -199,13 +203,10 @@ static void walk_getdents_process_dir(const char* dir, CIRCLE_handle* handle)
         return;
     }
 
-#if !defined(SYS_getdents) && defined(SYS_getdents64)
-#define SYS_getdents SYS_getdents64
-#endif
     /* Read all directory entries */
     while (1) {
         /* execute system call to get block of directory entries */
-        int nread = syscall(SYS_getdents, mfu_file->fd, buf, (int) BUF_SIZE);
+        int nread = syscall(SYS_getdents64, mfu_file->fd, buf, (int) BUF_SIZE);
         if (nread == -1) {
             MFU_LOG(MFU_LOG_ERR, "syscall to getdents failed when reading `%s' (errno=%d %s)", dir, errno, strerror(errno));
             WALK_RESULT = -1;
@@ -221,7 +222,7 @@ static void walk_getdents_process_dir(const char* dir, CIRCLE_handle* handle)
         int bpos = 0;
         while (bpos < nread) {
             /* get pointer to current record */
-            struct linux_dirent* d = (struct linux_dirent*)(buf + bpos);
+            struct linux_dirent64* d = (struct linux_dirent64*)(buf + bpos);
 
             /* get name of directory item, skip d_ino== 0, ".", and ".." entries */
             char* name = d->d_name;
@@ -232,7 +233,7 @@ static void walk_getdents_process_dir(const char* dir, CIRCLE_handle* handle)
                 int rc = build_path(newpath, CIRCLE_MAX_STRING_LEN, dir, name);
                 if (rc == 0) {
                     /* get type of item */
-                    char d_type = *(buf + bpos + d->d_reclen - 1);
+                    char d_type = (char) d->d_type;
 
 #if 0
                     printf("%-10s ", (d_type == DT_REG) ?  "regular" :
