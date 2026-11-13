@@ -55,6 +55,8 @@ static int DEREFERENCE;
 static int WALK_RESULT = 0;
 static int NO_ATIME;
 static mfu_file_t** CURRENT_PFILE;
+static uint64_t PRUNE_COUNT;
+static char** PRUNE_PATHS;
 
 /* walk instrumentation: when CIRCLE_INSTRUMENT is set to a positive interval
  * (same toggle libcircle uses), log the fan-out of any directory whose child
@@ -131,6 +133,26 @@ static int build_path(char* path, size_t path_len, const char* dir, const char* 
         return -1;
     }
 
+    return 0;
+}
+
+/** Return 1 if path has been pruned, meaning it is one of the pruned paths
+ * or lies below one, and 0 otherwise.  Matches whole components, so that a
+ * prune of "/a/b" covers "/a/b" and "/a/b/c" but not "/a/bc". */
+static int walk_pruned(const char* path)
+{
+    uint64_t i;
+    for (i = 0; i < PRUNE_COUNT; i++) {
+        const char* prune = PRUNE_PATHS[i];
+        size_t len = strlen(prune);
+
+        /* the last test admits a prune of "/", which is the one pruned
+         * path that keeps its trailing slash after being reduced */
+        if (strncmp(path, prune, len) == 0 &&
+            (path[len] == '\0' || path[len] == '/' || prune[len - 1] == '/')) {
+            return 1;
+        }
+    }
     return 0;
 }
 
@@ -239,7 +261,7 @@ static void walk_getdents_process_dir(const char* dir, CIRCLE_handle* handle)
                  * <dir> + '/' + <name> + '/0' */
                 char newpath[CIRCLE_MAX_STRING_LEN];
                 int rc = build_path(newpath, CIRCLE_MAX_STRING_LEN, dir, name);
-                if (rc == 0) {
+                if (rc == 0 && !walk_pruned(newpath)) {
                     /* get type of item */
                     char d_type = *(buf + bpos + d->d_reclen - 1);
 
@@ -339,7 +361,7 @@ static void walk_readdir_process_dir(const char* dir, CIRCLE_handle* handle)
                 /* <dir> + '/' + <name> + '/0' */
                 char newpath[CIRCLE_MAX_STRING_LEN];
                 int rc = build_path(newpath, CIRCLE_MAX_STRING_LEN, dir, name);
-                if (rc == 0) {
+                if (rc == 0 && !walk_pruned(newpath)) {
 #ifdef _DIRENT_HAVE_D_TYPE
                     /* record info for item */
                     mode_t mode;
@@ -402,6 +424,11 @@ static void walk_create(CIRCLE_handle* handle)
     uint64_t i;
     for (i = 0; i < CURRENT_NUM_DIRS; i++) {
         const char* path = CURRENT_DIRS[i];
+
+        /* leave pruned paths untouched */
+        if (walk_pruned(path)) {
+            continue;
+        }
 
         /* stat top level item */
         struct stat st;
@@ -524,6 +551,12 @@ static void walk_stat_process(CIRCLE_handle* handle)
     /* get path from queue */
     char path[CIRCLE_MAX_STRING_LEN];
     handle->dequeue(path);
+
+    /* leave pruned paths untouched */
+    if (walk_pruned(path)) {
+        return;
+    }
+
     mfu_file_t* mfu_file = *CURRENT_PFILE;
 
     /* stat item */
@@ -629,6 +662,10 @@ int mfu_flist_walk_paths(uint64_t num_paths, const char** paths,
     if (walk_opts->no_atime) {
         NO_ATIME = 1;
     }
+
+    /* record any paths the walk must not enter */
+    PRUNE_COUNT = walk_opts->prune_count;
+    PRUNE_PATHS = walk_opts->prunes;
 
     /* convert handle to flist_t */
     flist_t* flist = (flist_t*) bflist;

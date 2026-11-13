@@ -326,6 +326,7 @@ static void print_usage(void)
     printf("  -n, --no-atime          - use with -l; do not update the file last access time\n");
     printf("  -N, --no-usrgrp         - skip uid/gid to user/group name resolution\n");
     printf("  -L, --dereference       - follow symbolic links\n");
+    printf("  -P, --prune <path>      - do not walk <path>, may be given more than once\n");
     printf("      --progress <N>      - print progress every N seconds\n");
     printf("  -v, --verbose           - verbose output\n");
     printf("  -q, --quiet             - quiet output\n");
@@ -408,6 +409,7 @@ int main(int argc, char** argv)
         {"no-atime",       0, 0, 'n'},
         {"no-usrgrp",      0, 0, 'N'},
         {"dereference",    0, 0, 'L'},
+        {"prune",          1, 0, 'P'},
         {"progress",       1, 0, 'R'},
         {"verbose",        0, 0, 'v'},
         {"quiet",          0, 0, 'q'},
@@ -418,7 +420,7 @@ int main(int argc, char** argv)
     int usage = 0;
     while (1) {
         int c = getopt_long(
-                    argc, argv, "i:o:tEAZls:d:fpnNLvqh",
+                    argc, argv, "i:o:tEAZls:d:fpnNLP:vqh",
                     long_options, &option_index
                 );
 
@@ -465,6 +467,9 @@ int main(int argc, char** argv)
                 break;
             case 'L':
                 walk_opts->dereference = 1;
+                break;
+            case 'P':
+                mfu_walk_opts_add_prune(walk_opts, optarg);
                 break;
             case 'R':
                 mfu_progress_timeout = atoi(optarg);
@@ -591,6 +596,11 @@ daos_setup_done:
                 MFU_LOG(MFU_LOG_ERR, "Either a <path> or --input is required.");
             }
             usage = 1;
+        }
+
+        /* pruning only has meaning while walking */
+        if (walk_opts->prune_count > 0 && rank == 0) {
+            MFU_LOG(MFU_LOG_WARN, "--prune has no effect when reading a list with --input");
         }
     }
 

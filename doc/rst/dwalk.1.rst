@@ -102,6 +102,19 @@ OPTIONS
    Dereference symbolic links and walk the target file or directory
    that each symbolic link refers to.
 
+.. option:: -P, --prune PATH
+
+   Do not walk PATH. Neither PATH nor anything below it is opened, read
+   or stat'd, and none of it appears in the output, so the option can keep
+   a walk away from a directory that is slow or unhealthy. May be given
+   more than once.
+
+   PATH is matched a whole component at a time against the absolute path
+   of each item, so --prune /a/b covers /a/b and /a/b/c but not /a/bc. A
+   relative PATH is taken against the current directory and reduced
+   lexically; no symlink in it is resolved, since resolving one would mean
+   touching the path that is meant to be left alone.
+
 .. option:: --progress N
 
    Print progress message to stdout approximately every N seconds.

@@ -526,6 +526,12 @@ int mfu_flist_fill(
  * and set its fields with default values */
 mfu_walk_opts_t* mfu_walk_opts_new(void);
 
+/* record a path the walk must not enter: neither the path itself nor
+ * anything below it is opened, read or stat'd, and none of it appears in
+ * the resulting list.  the path is made absolute and reduced lexically,
+ * so a pruned path is never touched in order to resolve it */
+void mfu_walk_opts_add_prune(mfu_walk_opts_t* opts, const char* path);
+
 /* free object allocated in mfu_walk_opts_new */
 void mfu_walk_opts_delete(mfu_walk_opts_t** opts);
 

@@ -73,12 +73,44 @@ mfu_walk_opts_t* mfu_walk_opts_new(void)
     /* Resolve uid/gid to names by default */
     opts->skip_usrgrp = 0;
 
+    /* Walk every path by default */
+    opts->prune_count = 0;
+    opts->prunes      = NULL;
+
     return opts;
+}
+
+void mfu_walk_opts_add_prune(mfu_walk_opts_t* opts, const char* path)
+{
+    if (opts == NULL || path == NULL || path[0] == '\0') {
+        return;
+    }
+
+    /* grow the list by one and append the normalized path */
+    uint64_t count = opts->prune_count + 1;
+    char** prunes = (char**) MFU_MALLOC(count * sizeof(char*));
+    uint64_t i;
+    for (i = 0; i < opts->prune_count; i++) {
+        prunes[i] = opts->prunes[i];
+    }
+    prunes[count - 1] = mfu_path_strdup_abs_reduce_str(path);
+
+    mfu_free(&opts->prunes);
+    opts->prunes      = prunes;
+    opts->prune_count = count;
 }
 
 void mfu_walk_opts_delete(mfu_walk_opts_t** popts)
 {
   if (popts != NULL) {
+    mfu_walk_opts_t* opts = *popts;
+    if (opts != NULL) {
+        uint64_t i;
+        for (i = 0; i < opts->prune_count; i++) {
+            mfu_free(&opts->prunes[i]);
+        }
+        mfu_free(&opts->prunes);
+    }
     mfu_free(popts);
   }
 }

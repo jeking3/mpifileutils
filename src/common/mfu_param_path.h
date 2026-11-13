@@ -115,6 +115,8 @@ typedef struct {
     int dereference;    /* flag option to dereference symbolic links */
     int no_atime;       /* flag option to not update the file last acess time */
     int skip_usrgrp;   /* flag option to skip uid/gid to name resolution */
+    uint64_t prune_count; /* number of paths in prunes */
+    char** prunes;        /* absolute, reduced paths the walk must not enter */
 } mfu_walk_opts_t;
 
 typedef enum {
